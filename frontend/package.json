@@ -1,0 +1,9 @@
+{
+  "name": "clinic-rebuild",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Clinic management system rebuild",
+  "scripts": {
+    "test": "echo \"No tests yet\""
+  }
+}
