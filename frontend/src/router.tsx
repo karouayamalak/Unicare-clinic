@@ -1,13 +1,14 @@
 import { createRootRoute, createRoute, createRouter, Outlet } from "@tanstack/react-router";
 import { LoginPage } from "./routes/login";
 import { SignupPage } from "./routes/signup";
+import { Route as IndexRoute } from "./routes/Index";
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: () => <div>heelloo</div>,
+  component: IndexRoute.options.component,
 });
 
 const loginRoute = createRoute({
