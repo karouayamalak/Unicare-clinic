@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import compression from "compression";
 import hpp from "hpp";
 import morgan from "morgan";
+import authRoutes from "./routes/auth.routes";
 
 const app = express();
 
@@ -20,5 +21,7 @@ app.use(morgan("dev"));
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
+
+app.use("/auth", authRoutes);
 
 export default app;
