@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import heroBg from "../assets/hero-bg.jpg";
 import doctorPortrait from "../assets/doctor-portrait.jpg";
-import { getJson } from "../lib/api";
 import {
   Heart,
   Brain,
@@ -31,20 +30,15 @@ const specialities = [
   { icon: Stethoscope, name: "Médecine générale" },
 ];
 
-interface DoctorCard {
-  _id?: string;
-  name: string;
-  specialty: string;
-  experienceYears: number;
-  location: string;
-  bio?: string;
-}
+const doctors = [
+  { name: "Dr. Karim Belkacem", role: "Cardiologue", exp: "15+ ans" },
+  { name: "Dr. Amina Yahiaoui", role: "Pédiatre", exp: "12+ ans" },
+  { name: "Dr. Sofiane Meziane", role: "Neurologue", exp: "18+ ans" },
+];
 
 function Index() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const [doctors, setDoctors] = useState<DoctorCard[]>([]);
-  const [loadingDoctors, setLoadingDoctors] = useState(true);
 
   useEffect(() => {
     const el = heroRef.current;
@@ -57,31 +51,6 @@ function Index() {
     };
     el.addEventListener("mousemove", handle);
     return () => el.removeEventListener("mousemove", handle);
-  }, []);
-
-  useEffect(() => {
-    let ignore = false;
-    const loadDoctors = async () => {
-      try {
-        const data = await getJson("/doctors");
-        if (!ignore) {
-          setDoctors(data.doctors ?? []);
-        }
-      } catch {
-        if (!ignore) {
-          setDoctors([]);
-        }
-      } finally {
-        if (!ignore) {
-          setLoadingDoctors(false);
-        }
-      }
-    };
-
-    loadDoctors();
-    return () => {
-      ignore = true;
-    };
   }, []);
 
   return (
@@ -139,18 +108,18 @@ function Index() {
           </nav>
 
           <div
-            className="px-6 md:px-12 pt-16 pb-32 md:pt-28 md:pb-44 text-center transition-transform duration-300"
+            className="px-6 pt-16 pb-32 text-center transition-transform duration-300 md:px-12 md:pt-28 md:pb-44"
             style={{
               transform: `translate3d(${tilt.x * 15}px, ${tilt.y * 15}px, 0)`,
             }}
           >
-            <p className="text-white/70 text-sm uppercase tracking-[0.3em] mb-6">
+            <p className="mb-6 text-sm uppercase tracking-[0.3em] text-white/70">
               Clinique · Béjaïa, Algérie
             </p>
-            <h1 className="text-white font-light text-4xl md:text-6xl lg:text-7xl leading-[1.05] max-w-4xl mx-auto tracking-tight">
+            <h1 className="mx-auto max-w-4xl text-4xl font-light leading-[1.05] tracking-tight text-white md:text-6xl lg:text-7xl">
               Prenez rendez-vous avec des médecins de confiance à Béjaïa
             </h1>
-            <p className="mt-6 text-white/75 max-w-xl mx-auto">
+            <p className="mx-auto mt-6 max-w-xl text-white/75">
               Multiples spécialités. Vrais spécialistes. Une réservation simple.
             </p>
 
@@ -159,21 +128,21 @@ function Index() {
               onSubmit={(e) => e.preventDefault()}
               className="mx-auto mt-10 flex max-w-3xl flex-col gap-2 rounded-[24px] border border-white/20 bg-white/15 p-2 backdrop-blur-lg md:flex-row"
             >
-              <div className="flex items-center gap-2 flex-1 px-4 py-3 rounded-xl bg-white/5">
+              <div className="flex flex-1 items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
                 <Search className="h-4 w-4 text-white/60" />
                 <input
                   placeholder="Spécialité ou médecin"
-                  className="bg-transparent w-full text-white placeholder:text-white/50 outline-none text-sm"
+                  className="w-full bg-transparent text-sm text-white placeholder:text-white/50 outline-none"
                 />
               </div>
-              <div className="flex items-center gap-2 flex-1 px-4 py-3 rounded-xl bg-white/5">
+              <div className="flex flex-1 items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
                 <MapPin className="h-4 w-4 text-white/60" />
                 <input
                   placeholder="Quartier à Béjaïa"
-                  className="bg-transparent w-full text-white placeholder:text-white/50 outline-none text-sm"
+                  className="w-full bg-transparent text-sm text-white placeholder:text-white/50 outline-none"
                 />
               </div>
-              <button className="px-8 py-3 rounded-xl bg-white text-[oklch(0.18_0.06_250)] font-medium text-sm hover:bg-white/90 transition">
+              <button className="rounded-xl bg-white px-8 py-3 text-sm font-medium text-[oklch(0.18_0.06_250)] transition hover:bg-white/90">
                 Trouver un médecin
               </button>
             </form>
@@ -182,11 +151,11 @@ function Index() {
       </section>
 
       <section id="specialities" className="mx-auto max-w-6xl px-6 py-24 md:px-12 md:py-32">
-        <div className="text-center mb-16">
-          <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-4">
+        <div className="mb-16 text-center">
+          <p className="mb-4 text-xs uppercase tracking-[0.3em] text-muted-foreground">
             Nos spécialités
           </p>
-          <h2 className="text-3xl md:text-5xl font-light tracking-tight text-foreground max-w-2xl mx-auto">
+          <h2 className="mx-auto max-w-2xl text-3xl font-light tracking-tight text-foreground md:text-5xl">
             Des soins dans chaque discipline
           </h2>
         </div>
@@ -194,11 +163,11 @@ function Index() {
           {specialities.map((s) => (
             <div
               key={s.name}
-              className="group bg-background hover:bg-secondary transition p-8 md:p-10 flex flex-col gap-4 cursor-pointer"
+              className="group flex cursor-pointer flex-col gap-4 bg-background p-8 transition hover:bg-secondary md:p-10"
             >
               <s.icon className="h-6 w-6 text-[oklch(0.55_0.16_240)]" strokeWidth={1.5} />
               <div className="text-lg font-medium text-foreground">{s.name}</div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition">
+              <div className="flex items-center gap-1 text-xs text-muted-foreground opacity-0 transition group-hover:opacity-100">
                 Voir les médecins <ArrowRight className="h-3 w-3" />
               </div>
             </div>
@@ -212,23 +181,23 @@ function Index() {
       >
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-3 py-16 md:grid-cols-2 md:gap-20 md:px-6 md:py-24">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-4">
+            <p className="mb-4 text-xs uppercase tracking-[0.3em] text-muted-foreground">
               Nos médecins
             </p>
-            <h2 className="text-3xl md:text-5xl font-light tracking-tight text-foreground">
+            <h2 className="text-3xl font-light tracking-tight text-foreground md:text-5xl">
               Rencontrez les spécialistes derrière UniCare.
             </h2>
-            <p className="mt-6 text-muted-foreground max-w-md">
+            <p className="mt-6 max-w-md text-muted-foreground">
               Plus de 40 médecins certifiés à Béjaïa, tous au même endroit.
             </p>
             <a
               href="#"
-              className="mt-8 inline-flex items-center gap-2 text-sm text-foreground border-b border-foreground pb-1 hover:gap-3 transition-all"
+              className="mt-8 inline-flex items-center gap-2 border-b border-foreground pb-1 text-sm text-foreground transition-all hover:gap-3"
             >
               Voir tous les médecins <ArrowRight className="h-4 w-4" />
             </a>
           </div>
-          <div className="relative aspect-4/5 rounded-2xl overflow-hidden bg-[oklch(0.15_0.05_250)]">
+          <div className="relative aspect-4/5 overflow-hidden rounded-2xl bg-[oklch(0.15_0.05_250)]">
             <img
               src={doctorPortrait}
               alt="Spécialiste UniCare"
@@ -237,39 +206,32 @@ function Index() {
               width={1024}
               height={1024}
             />
-            <div className="absolute bottom-0 left-0 right-0 p-6 bg-linear-to-t from-black/70 to-transparent">
-              <div className="text-white font-medium">Dr. Karim Belkacem</div>
-              <div className="text-white/70 text-sm">Cardiologue · 15+ ans</div>
+            <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent p-6">
+              <div className="font-medium text-white">Dr. Karim Belkacem</div>
+              <div className="text-sm text-white/70">Cardiologue · 15+ ans</div>
             </div>
           </div>
         </div>
 
         <div className="mx-auto grid max-w-6xl gap-6 px-3 pb-16 md:grid-cols-3 md:px-6 md:pb-24">
-          {loadingDoctors ? (
-            <div className="col-span-full text-center text-sm text-muted-foreground">Chargement des médecins…</div>
-          ) : doctors.length === 0 ? (
-            <div className="col-span-full text-center text-sm text-muted-foreground">Aucun médecin disponible pour le moment.</div>
-          ) : (
-            doctors.map((d) => (
-              <div
-                key={d._id ?? d.name}
-                className="rounded-[22px] border border-slate-200/80 bg-white/85 p-6 shadow-[0_18px_45px_-24px_rgba(7,17,30,0.25)] transition hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div className="h-12 w-12 rounded-full bg-[oklch(0.55_0.16_240/0.1)] flex items-center justify-center text-[oklch(0.55_0.16_240)] font-medium">
-                  {d.name.split(" ").slice(-1)[0][0]}
-                </div>
-                <div className="mt-6 font-medium text-foreground">{d.name}</div>
-                <div className="text-sm text-muted-foreground">{d.specialty}</div>
-                <div className="mt-4 text-xs text-muted-foreground">{d.experienceYears} ans d&apos;expérience · {d.location}</div>
-                {d.bio ? <div className="mt-3 text-sm text-muted-foreground">{d.bio}</div> : null}
+          {doctors.map((d) => (
+            <div
+              key={d.name}
+              className="rounded-[22px] border border-slate-200/80 bg-white/85 p-6 shadow-[0_18px_45px_-24px_rgba(7,17,30,0.25)] transition hover:-translate-y-1 hover:shadow-xl"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[oklch(0.55_0.16_240/0.1)] font-medium text-[oklch(0.55_0.16_240)]">
+                {d.name.split(" ")[1][0]}
               </div>
-            ))
-          )}
+              <div className="mt-6 font-medium text-foreground">{d.name}</div>
+              <div className="text-sm text-muted-foreground">{d.role}</div>
+              <div className="mt-4 text-xs text-muted-foreground">{d.exp}</div>
+            </div>
+          ))}
         </div>
       </section>
 
       <section id="about" className="mx-auto max-w-6xl px-6 py-24 md:px-12 md:py-32">
-        <div className="grid md:grid-cols-3 gap-12">
+        <div className="grid gap-12 md:grid-cols-3">
           {[
             {
               icon: Search,
@@ -308,25 +270,25 @@ function Index() {
         id="contact"
         className="mx-3 mb-3 rounded-4xl bg-[oklch(0.18_0.06_250)] px-6 py-20 text-center shadow-[0_30px_80px_-35px_rgba(7,17,30,0.45)] md:px-12 md:py-28"
       >
-        <h2 className="text-3xl md:text-5xl font-light text-white tracking-tight max-w-2xl mx-auto">
+        <h2 className="mx-auto max-w-2xl text-3xl font-light tracking-tight text-white md:text-5xl">
           Votre prochain rendez-vous est à un clic.
         </h2>
         <div className="mt-10 flex flex-wrap justify-center gap-4">
           <Link
             to="/login"
             search={{ redirect: "/doctors" }}
-            className="px-8 py-3 rounded-full bg-white text-[oklch(0.18_0.06_250)] font-medium text-sm hover:bg-white/90 transition"
+            className="rounded-full bg-white px-8 py-3 text-sm font-medium text-[oklch(0.18_0.06_250)] transition hover:bg-white/90"
           >
             Prendre rendez-vous
           </Link>
           <Link
             to="/doctors"
-            className="px-8 py-3 rounded-full border border-white/30 text-white text-sm hover:bg-white/10 transition"
+            className="rounded-full border border-white/30 px-8 py-3 text-sm text-white transition hover:bg-white/10"
           >
             Parcourir les médecins
           </Link>
         </div>
-        <div className="mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between gap-4 text-sm text-white/60">
+        <div className="mt-16 flex flex-col justify-between gap-4 border-t border-white/10 pt-8 text-sm text-white/60 md:flex-row">
           <div>UniCare Clinique · Béjaïa, Algérie</div>
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4" /> Ouvert dim–ven · 8h00–20h00
