@@ -11,17 +11,27 @@ export interface AuthUser {
 
 const API_BASE = "http://localhost:5000";
 
-export async function postJson(path: string, body: unknown) {
+export async function requestJson(path: string, options: RequestInit = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
-    method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    ...options,
   });
 
-  const data = await res.json();
+  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(data.message || "Request failed");
   }
 
   return data;
+}
+
+export async function postJson(path: string, body: unknown) {
+  return requestJson(path, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function getJson(path: string) {
+  return requestJson(path, { method: "GET" });
 }

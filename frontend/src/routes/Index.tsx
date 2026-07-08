@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import heroBg from "../assets/hero-bg.jpg";
 import doctorPortrait from "../assets/doctor-portrait.jpg";
+import { getJson } from "../lib/api";
 import {
   Heart,
   Brain,
@@ -30,15 +31,20 @@ const specialities = [
   { icon: Stethoscope, name: "Médecine générale" },
 ];
 
-const doctors = [
-  { name: "Dr. Karim Belkacem", role: "Cardiologue", exp: "15+ ans" },
-  { name: "Dr. Amina Yahiaoui", role: "Pédiatre", exp: "12+ ans" },
-  { name: "Dr. Sofiane Meziane", role: "Neurologue", exp: "18+ ans" },
-];
+interface DoctorCard {
+  _id?: string;
+  name: string;
+  specialty: string;
+  experienceYears: number;
+  location: string;
+  bio?: string;
+}
 
 function Index() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [doctors, setDoctors] = useState<DoctorCard[]>([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
 
   useEffect(() => {
     const el = heroRef.current;
@@ -51,6 +57,31 @@ function Index() {
     };
     el.addEventListener("mousemove", handle);
     return () => el.removeEventListener("mousemove", handle);
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+    const loadDoctors = async () => {
+      try {
+        const data = await getJson("/doctors");
+        if (!ignore) {
+          setDoctors(data.doctors ?? []);
+        }
+      } catch {
+        if (!ignore) {
+          setDoctors([]);
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingDoctors(false);
+        }
+      }
+    };
+
+    loadDoctors();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   return (
@@ -214,19 +245,26 @@ function Index() {
         </div>
 
         <div className="mx-auto grid max-w-6xl gap-6 px-3 pb-16 md:grid-cols-3 md:px-6 md:pb-24">
-          {doctors.map((d) => (
-            <div
-              key={d.name}
-              className="rounded-[22px] border border-slate-200/80 bg-white/85 p-6 shadow-[0_18px_45px_-24px_rgba(7,17,30,0.25)] transition hover:-translate-y-1 hover:shadow-xl"
-            >
-              <div className="h-12 w-12 rounded-full bg-[oklch(0.55_0.16_240/0.1)] flex items-center justify-center text-[oklch(0.55_0.16_240)] font-medium">
-                {d.name.split(" ")[1][0]}
+          {loadingDoctors ? (
+            <div className="col-span-full text-center text-sm text-muted-foreground">Chargement des médecins…</div>
+          ) : doctors.length === 0 ? (
+            <div className="col-span-full text-center text-sm text-muted-foreground">Aucun médecin disponible pour le moment.</div>
+          ) : (
+            doctors.map((d) => (
+              <div
+                key={d._id ?? d.name}
+                className="rounded-[22px] border border-slate-200/80 bg-white/85 p-6 shadow-[0_18px_45px_-24px_rgba(7,17,30,0.25)] transition hover:-translate-y-1 hover:shadow-xl"
+              >
+                <div className="h-12 w-12 rounded-full bg-[oklch(0.55_0.16_240/0.1)] flex items-center justify-center text-[oklch(0.55_0.16_240)] font-medium">
+                  {d.name.split(" ").slice(-1)[0][0]}
+                </div>
+                <div className="mt-6 font-medium text-foreground">{d.name}</div>
+                <div className="text-sm text-muted-foreground">{d.specialty}</div>
+                <div className="mt-4 text-xs text-muted-foreground">{d.experienceYears} ans d&apos;expérience · {d.location}</div>
+                {d.bio ? <div className="mt-3 text-sm text-muted-foreground">{d.bio}</div> : null}
               </div>
-              <div className="mt-6 font-medium text-foreground">{d.name}</div>
-              <div className="text-sm text-muted-foreground">{d.role}</div>
-              <div className="mt-4 text-xs text-muted-foreground">{d.exp}</div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
 

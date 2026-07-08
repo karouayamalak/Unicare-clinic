@@ -6,6 +6,7 @@ import compression from "compression";
 import hpp from "hpp";
 import morgan from "morgan";
 import authRoutes from "./routes/auth.routes";
+import doctorRoutes from "./routes/doctor.routes";
 
 const app = express();
 
@@ -23,5 +24,6 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/auth", authRoutes);
+app.use("/doctors", doctorRoutes);
 
 export default app;
