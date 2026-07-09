@@ -30,12 +30,6 @@ const specialities = [
   { icon: Stethoscope, name: "Médecine générale" },
 ];
 
-const doctors = [
-  { name: "Dr. Karim Belkacem", role: "Cardiologue", exp: "15+ ans" },
-  { name: "Dr. Amina Yahiaoui", role: "Pédiatre", exp: "12+ ans" },
-  { name: "Dr. Sofiane Meziane", role: "Neurologue", exp: "18+ ans" },
-];
-
 function Index() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -57,11 +51,11 @@ function Index() {
     <div className="min-h-screen bg-transparent">
       <section
         ref={heroRef}
-        className="hero-panel relative mx-3 mt-3 overflow-hidden"
+        className="hero-panel relative mx-3 mt-3 overflow-hidden rounded-[2.5rem]"
         style={{ perspective: "1200px" }}
       >
         <div
-          className="absolute inset-0 transition-transform duration-300 ease-out"
+          className="absolute inset-0 rounded-[2.5rem] transition-transform duration-300 ease-out"
           style={{
             transform: `translate3d(${tilt.x * -30}px, ${tilt.y * -30}px, 0) scale(1.1)`,
           }}
@@ -69,11 +63,11 @@ function Index() {
           <img
             src={heroBg}
             alt="Fond médical"
-            className="h-full w-full object-cover"
+            className="h-full w-full rounded-[2.5rem] object-cover"
             width={1920}
             height={1280}
           />
-          <div className="absolute inset-0 bg-linear-to-b from-[oklch(0.15_0.05_250/0.55)] via-[oklch(0.15_0.05_250/0.3)] to-[oklch(0.1_0.04_250/0.85)]" />
+          <div className="absolute inset-0 rounded-[2.5rem] bg-linear-to-b from-[oklch(0.15_0.05_250/0.55)] via-[oklch(0.15_0.05_250/0.3)] to-[oklch(0.1_0.04_250/0.85)]" />
         </div>
 
         <div className="relative z-10">
@@ -206,27 +200,8 @@ function Index() {
               width={1024}
               height={1024}
             />
-            <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent p-6">
-              <div className="font-medium text-white">Dr. Karim Belkacem</div>
-              <div className="text-sm text-white/70">Cardiologue · 15+ ans</div>
-            </div>
+           
           </div>
-        </div>
-
-        <div className="mx-auto grid max-w-6xl gap-6 px-3 pb-16 md:grid-cols-3 md:px-6 md:pb-24">
-          {doctors.map((d) => (
-            <div
-              key={d.name}
-              className="rounded-[22px] border border-slate-200/80 bg-white/85 p-6 shadow-[0_18px_45px_-24px_rgba(7,17,30,0.25)] transition hover:-translate-y-1 hover:shadow-xl"
-            >
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[oklch(0.55_0.16_240/0.1)] font-medium text-[oklch(0.55_0.16_240)]">
-                {d.name.split(" ")[1][0]}
-              </div>
-              <div className="mt-6 font-medium text-foreground">{d.name}</div>
-              <div className="text-sm text-muted-foreground">{d.role}</div>
-              <div className="mt-4 text-xs text-muted-foreground">{d.exp}</div>
-            </div>
-          ))}
         </div>
       </section>
 
