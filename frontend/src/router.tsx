@@ -1,6 +1,6 @@
 import { createRootRoute, createRoute, createRouter, Outlet } from "@tanstack/react-router";
-import { LoginPage } from "./routes/login";
-import { SignupPage } from "./routes/signup";
+import { Route as LoginRoute } from "./routes/login";
+import { Route as SignupRoute } from "./routes/signup";
 import { Route as IndexRoute } from "./routes/Index";
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
@@ -14,13 +14,13 @@ const indexRoute = createRoute({
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
-  component: LoginPage,
+  component: LoginRoute.options.component,
 });
 
 const signupRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/signup",
-  component: SignupPage,
+  component: SignupRoute.options.component,
 });
 
 const routeTree = rootRoute.addChildren([indexRoute, loginRoute, signupRoute]);
