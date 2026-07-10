@@ -1,7 +1,6 @@
-import mongoose from "mongoose";
-import { env } from "../config";
+export const DEFAULT_MONGO_URI = "mongodb://127.0.0.1:27017/unicare";
 
-export const connectDB = async () => {
-  await mongoose.connect(env.MONGO_URI);
-  console.log("MongoDB connected");
+export const resolveMongoConnectionUri = (configuredUri?: string): string => {
+  const normalizedUri = configuredUri?.trim();
+  return normalizedUri ? normalizedUri : DEFAULT_MONGO_URI;
 };
