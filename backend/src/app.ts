@@ -9,8 +9,11 @@ import { env } from "./config";
 import { AppError, errorHandler } from "./middleware/error";
 import authRouter from "./routes/auth.routes";
 import doctorRouter from "./routes/doctor.routes";
+import patientProfileRouter from "./routes/patientProfile.routes";
+import dependentRouter from "./routes/dependent.routes";
 
 const app = express();
+
 
 // ─── Security hardening ────────────────────────────────────────────────────────
 
@@ -77,6 +80,8 @@ app.get("/api/v1/health", (_req, res) => {
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/doctors", doctorRouter);
+app.use("/api/v1/patient-profiles", patientProfileRouter);
+app.use("/api/v1/dependents", dependentRouter);
 
 // ─── 404 wildcard ─────────────────────────────────────────────────────────────
 
