@@ -1,21 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
-import path from "path";
-import { fileURLToPath } from "url";
 
-const srcPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "src");
-
+// The route tree is pre-generated (routeTree.gen.ts), no plugin needed at build time.
 export default defineConfig({
   resolve: {
     alias: {
-      "@": srcPath,
+      "@": new URL("./src", import.meta.url).pathname,
     },
   },
-  plugins: [
-    tanstackRouter(),
-    react(),
-    tailwindcss(),
-  ],
-});
+  plugins: [react(), tailwindcss()],
+});
