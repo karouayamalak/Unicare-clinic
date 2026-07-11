@@ -18,6 +18,8 @@ export interface IUser extends Document {
   lockUntil?: Date;
   isActive: boolean;
   image?: string; // base64 representation of profile picture
+  loginOtpToken?: string;
+  loginOtpExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -86,6 +88,8 @@ const userSchema = new Schema<IUser>(
       type: String,
       default: "",
     },
+    loginOtpToken: String,
+    loginOtpExpires: Date,
   },
   {
     timestamps: true,

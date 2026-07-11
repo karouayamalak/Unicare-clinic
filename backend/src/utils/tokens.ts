@@ -26,17 +26,26 @@ export const generateRefreshToken = (payload: IRefreshTokenPayload): string => {
 };
 
 const parseDurationToMs = (duration: string): number => {
-  const amount = parseInt(duration, 10);
-  const unit = duration.replace(amount.toString(), "").trim();
+  const match = duration.match(/^(\d+)\s*([a-z]+)$/i);
+  if (!match) return 15 * 60 * 1000;
+  const amount = parseInt(match[1]!, 10);
+  const unit = match[2]!.toLowerCase();
   switch (unit) {
     case "m":
     case "min":
+    case "mins":
+    case "minute":
+    case "minutes":
       return amount * 60 * 1000;
     case "h":
     case "hr":
+    case "hrs":
+    case "hour":
+    case "hours":
       return amount * 60 * 60 * 1000;
     case "d":
     case "day":
+    case "days":
       return amount * 24 * 60 * 60 * 1000;
     default:
       return 15 * 60 * 1000;

@@ -3,14 +3,17 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AuthButton, AuthField, AuthLayout } from "../components/layouts/AuthLayout";
 import { verifyEmail, ApiError } from "../lib/api";
+import { z } from "zod";
 
 export const Route = createFileRoute("/verify-email")({
+  validateSearch: z.object({ email: z.string().optional() }),
   component: VerifyEmailPage,
 });
 
 function VerifyEmailPage() {
   const nav = useNavigate();
-  const [email, setEmail] = useState("");
+  const { email: prefillEmail } = Route.useSearch();
+  const [email, setEmail] = useState(prefillEmail ?? "");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
 

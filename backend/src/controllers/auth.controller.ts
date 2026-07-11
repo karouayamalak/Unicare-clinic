@@ -4,7 +4,7 @@ import { User } from "../models/user.model";
 import { Token } from "../models/token.model";
 import { Doctor } from "../models/doctor.model";
 import { AppError } from "../middleware/error";
-import { sendVerificationEmail } from "../utils/email";
+import { sendVerificationEmail, sendLoginOtpEmail } from "../utils/email";
 import { verifyGoogleIdToken } from "../utils/googleAuth";
 import {
   generateAccessToken,
@@ -116,36 +116,78 @@ export const login = async (
         );
       }
       user.isEmailVerified = true;
-      await user.save({ validateBeforeSave: false });
     }
 
     await user.resetLoginAttempts();
 
-    const accessToken = generateAccessToken({
-      userId: user.id,
-      role: user.role,
+    // Generate 6-digit OTP and save hashed version
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
+    user.loginOtpToken = hashedOtp;
+    user.loginOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    await user.save({ validateBeforeSave: false });
+
+    // Send OTP email
+    sendLoginOtpEmail(user.email, otp, user.firstName).catch(console.error);
+    console.log(` OTP sent for login: ${user.email}`);
+
+    // Do NOT issue tokens yet — client must verify OTP first
+    res.status(200).json({
+      status: "otp_required",
+      message: "Un code de vérification a été envoyé à votre adresse email.",
+      data: { email: user.email },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ─── Verify Login OTP ─────────────────────────────────────────────────────────
+
+export const verifyLoginOtp = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return next(new AppError("Email and OTP code are required.", 400));
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) {
+      return next(new AppError("Invalid or expired verification code.", 401));
+    }
+
+    if (!user.loginOtpToken || !user.loginOtpExpires || user.loginOtpExpires < new Date()) {
+      return next(new AppError("Le code de vérification a expiré. Veuillez vous reconnecter.", 401));
+    }
+
+    const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
+    if (hashedOtp !== user.loginOtpToken) {
+      return next(new AppError("Code incorrect. Vérifiez votre email et réessayez.", 401));
+    }
+
+    // OTP valid — clear it and issue tokens
+    user.loginOtpToken = undefined;
+    user.loginOtpExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    const accessToken = generateAccessToken({ userId: user.id, role: user.role });
     const refreshToken = generateRefreshToken({ userId: user.id });
 
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(refreshToken)
-      .digest("hex");
+    const hashedToken = crypto.createHash("sha256").update(refreshToken).digest("hex");
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    await Token.create({
-      user: user._id,
-      token: hashedToken,
-      expiresAt,
-      isRevoked: false,
-    });
+    await Token.create({ user: user._id, token: hashedToken, expiresAt, isRevoked: false });
 
     sendTokens(res, accessToken, refreshToken);
-    console.log(` Successful login for ${user.email}`);
+    console.log(` OTP verified — login complete for ${user.email}`);
 
     res.status(200).json({
       status: "success",
-      message: "Successfully logged in.",
+      message: "Connexion réussie.",
       data: {
         user: {
           id: user._id,

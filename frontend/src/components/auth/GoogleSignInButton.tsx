@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { googleLoginUser, ApiError, type AuthUser } from "../../lib/api";
-import { authStore } from "../../lib/authStore";
+import { googleLoginUser, ApiError, type AuthUser } from "@/lib/api";
+import { authStore } from "@/lib/authStore";
 import { toast } from "sonner";
 
 export const GOOGLE_CLIENT_ID =
@@ -122,10 +122,8 @@ export function GoogleSignInButton({
           err instanceof ApiError
             ? err.message
             : err instanceof Error
-            ? err.message
-            : typeof err === "string"
-            ? err
-            : "La connexion Google a échoué.";
+              ? err.message
+              : "La connexion Google a échoué.";
         toast.error("Échec de l'authentification Google", { description: msg });
       } finally {
         setLoading(false);
@@ -209,6 +207,7 @@ export function GoogleSignInButton({
         const gId = getGoogle()?.accounts?.id;
         if (!gId) throw new Error("Google Sign-In not ready");
 
+        // Try clicking the official hidden Google button first (opens popup reliably)
         const hiddenBtn =
           hiddenRef.current?.querySelector('[role="button"]') ??
           hiddenRef.current?.querySelector("div");
@@ -217,6 +216,7 @@ export function GoogleSignInButton({
           return;
         }
 
+        // Fallback: One Tap / account chooser prompt
         gId.prompt((notification) => {
           if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
             const reason =
@@ -258,6 +258,7 @@ export function GoogleSignInButton({
 
   return (
     <div className="w-full">
+      {/* Hidden official Google button — triggered programmatically on click */}
       <div ref={hiddenRef} className="sr-only" aria-hidden />
 
       <button

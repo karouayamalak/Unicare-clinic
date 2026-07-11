@@ -48,7 +48,7 @@ function SignupPage() {
       toast.success("Compte créé !", {
         description: `Un code à 6 chiffres a été envoyé à ${email}`,
       });
-      nav({ to: "/verify-email" });
+      nav({ to: "/verify-email", search: { email } });
     } catch (err) {
       const msg = err instanceof ApiError ? err.message : "Une erreur est survenue.";
       toast.error("Inscription échouée", { description: msg });
