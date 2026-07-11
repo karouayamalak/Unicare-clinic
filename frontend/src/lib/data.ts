@@ -1,3 +1,7 @@
+import doc1 from "@/assets/doctor-1.jpg";
+import doc2 from "@/assets/doctor-2.jpg";
+import doc3 from "@/assets/doctor-3.jpg";
+import doc4 from "@/assets/doctor-4.jpg";
 import {
   Activity,
   Baby,
@@ -236,6 +240,7 @@ export interface Doctor {
   nextSlot: string;
 }
 
+const photos = [doc1, doc2, doc3, doc4];
 
 const firstNames = [
   "Sarah",
@@ -287,7 +292,35 @@ function rand(seed: number, min: number, max: number) {
   return min + Math.floor((x - Math.floor(x)) * (max - min + 1));
 }
 
-
+export const doctors: Doctor[] = Array.from({ length: 40 }).map((_, i) => {
+  const spec = specialities[i % specialities.length];
+  const fn = firstNames[i % firstNames.length];
+  const ln = lastNames[(i * 3) % lastNames.length];
+  return {
+    id: `${spec.slug}-${i}`,
+    name: `Dr. ${fn} ${ln}`,
+    speciality: spec.name,
+    specialitySlug: spec.slug,
+    photo: photos[i % photos.length],
+    experience: rand(i + 1, 5, 28),
+    rating: 4.5 + rand(i + 7, 0, 5) / 10,
+    reviews: rand(i + 3, 42, 890),
+    education: ["MD, Université de Béjaïa", "Residency, CHU de Béjaïa", "Board Certified"],
+    languages: i % 2 === 0 ? ["Arabic", "French", "Kabyle"] : ["Arabic", "French", "English"],
+    location: [
+      "Clinique de la Soummam",
+      "Centre Médical Yemma Gouraya",
+      "Espace Médical Ihaddaden",
+      "Cabinet Sidi Ahmed",
+    ][i % 4],
+    fee: 120 + rand(i + 9, 0, 8) * 25,
+    availableDays: ["Mon", "Tue", "Wed", "Thu", "Fri"].filter((_, d) => (i + d) % 3 !== 0),
+    hours: "9:00 AM – 5:00 PM",
+    bio: `${spec.name} specialist with ${rand(i + 1, 5, 28)}+ years of experience, committed to compassionate, evidence-based patient care.`,
+    patients: rand(i + 11, 400, 4500),
+    nextSlot: ["Today, 3:30 PM", "Tomorrow, 10:00 AM", "Thu, 2:15 PM", "Fri, 11:45 AM"][i % 4],
+  };
+});
 
 export const stats = [
   { value: "120K+", label: "Patients served" },
@@ -296,7 +329,29 @@ export const stats = [
   { value: "4.9", label: "Average rating" },
 ];
 
-
+export const testimonials = [
+  {
+    name: "Olivia Martin",
+    role: "Patient",
+    quote:
+      "Booking a cardiologist took me under two minutes. The whole experience felt calm and premium — nothing like the healthcare portals I'm used to.",
+    avatar: doc1,
+  },
+  {
+    name: "Dr. Ravi Menon",
+    role: "Neurologist",
+    quote:
+      "UniCare gave me back hours of my week. The scheduling and patient notes are the cleanest I've used in fifteen years of practice.",
+    avatar: doc4,
+  },
+  {
+    name: "Jenna Park",
+    role: "Clinic Administrator",
+    quote:
+      "We rolled UniCare out across four locations. Revenue reporting, staff management and patient trust all improved measurably.",
+    avatar: doc3,
+  },
+];
 
 export const faqs = [
   {
