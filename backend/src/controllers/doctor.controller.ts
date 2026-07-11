@@ -85,6 +85,23 @@ export const createDoctor = async (
 
     let userId: string | undefined;
     if (password) {
+      // Validate password strength before attempting to create user
+      if (password.length < 12) {
+        return next(new AppError("Le mot de passe doit contenir au moins 12 caractères.", 400));
+      }
+      if (!/[A-Z]/.test(password)) {
+        return next(new AppError("Le mot de passe doit contenir au moins une lettre majuscule.", 400));
+      }
+      if (!/[a-z]/.test(password)) {
+        return next(new AppError("Le mot de passe doit contenir au moins une lettre minuscule.", 400));
+      }
+      if (!/[0-9]/.test(password)) {
+        return next(new AppError("Le mot de passe doit contenir au moins un chiffre.", 400));
+      }
+      if (!/[^A-Za-z0-9]/.test(password)) {
+        return next(new AppError("Le mot de passe doit contenir au moins un caractère spécial (ex: @, !, #).", 400));
+      }
+
       const existing = await User.findOne({ email });
       if (existing) {
         return next(new AppError("Email already registered as a user.", 400));
@@ -146,11 +163,49 @@ export const updateDoctor = async (
       return next(new AppError("Not authorized.", 403));
     }
 
+    // Find the existing doctor record first
+    const existing = await Doctor.findById(req.params.id);
+    if (!existing) return next(new AppError("Doctor not found.", 404));
+
+    // Doctors can only update their own profile
+    if (req.user.role === "Doctor" && existing.userId?.toString() !== req.user._id.toString()) {
+      return next(new AppError("Vous ne pouvez modifier que votre propre profil.", 403));
+    }
+
+    // Admin cannot modify personal information fields — only the doctor can
+    const PERSONAL_FIELDS = ["firstName", "lastName", "email", "phone", "bio", "image"];
+    if (req.user.role === "Admin") {
+      for (const field of PERSONAL_FIELDS) {
+        if (field in req.body) {
+          delete req.body[field];
+        }
+      }
+    }
+
     const doctor = await Doctor.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     });
     if (!doctor) return next(new AppError("Doctor not found.", 404));
+
+    // Sync status changes to the linked User account (admin only)
+    if (doctor.userId && req.user.role === "Admin") {
+      const { status } = req.body;
+      const userUpdates: Record<string, unknown> = {};
+
+      // Deactivate/reactivate user account based on doctor status
+      if (status === "Inactif") {
+        userUpdates.isActive = false;
+      } else if (status === "Actif" || status === "Congé") {
+        userUpdates.isActive = true;
+      }
+
+      if (Object.keys(userUpdates).length > 0) {
+        await User.findByIdAndUpdate(doctor.userId, userUpdates, {
+          runValidators: false,
+        });
+      }
+    }
 
     res.status(200).json({ status: "success", data: { doctor } });
   } catch (error) {
@@ -192,7 +247,14 @@ export const addBlockedSlot = async (
     const { date, hour } = req.body;
     if (!date) return next(new AppError("Date is required.", 400));
 
-    const doctor = await Doctor.findOne({ userId: req.user!._id });
+    let doctor = await Doctor.findOne({ userId: req.user!._id });
+    if (!doctor) {
+      doctor = await Doctor.findOne({ email: req.user!.email.toLowerCase().trim() });
+      if (doctor && !doctor.userId) {
+        doctor.userId = req.user!._id as any;
+        await doctor.save();
+      }
+    }
     if (!doctor) return next(new AppError("Doctor profile not found.", 404));
 
     doctor.blockedSlots.push({ date, hour });
@@ -216,7 +278,14 @@ export const removeBlockedSlot = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const doctor = await Doctor.findOne({ userId: req.user!._id });
+    let doctor = await Doctor.findOne({ userId: req.user!._id });
+    if (!doctor) {
+      doctor = await Doctor.findOne({ email: req.user!.email.toLowerCase().trim() });
+      if (doctor && !doctor.userId) {
+        doctor.userId = req.user!._id as any;
+        await doctor.save();
+      }
+    }
     if (!doctor) return next(new AppError("Doctor profile not found.", 404));
 
     const slotIndex = doctor.blockedSlots.findIndex(
