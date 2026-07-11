@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import heroBg from "../assets/hero-bg.jpg";
 import doctorPortrait from "../assets/doctor-portrait.jpg";
+import { fetchDoctors, type ApiDoctor } from "@/lib/api";
 import {
   Heart,
   Brain,
@@ -15,25 +16,76 @@ import {
   Calendar,
   ShieldCheck,
   Clock,
+  Microscope,
+  Wind,
+  FlaskConical,
+  X,
+  Star,
+  User,
 } from "lucide-react";
+import { DefaultAvatar } from "@/components/ui-ext/primitives";
 
-export const Route = createFileRoute("/Index")({
+export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const specialities = [
-  { icon: Heart, name: "Cardiologie" },
-  { icon: Brain, name: "Neurologie" },
-  { icon: Baby, name: "Pédiatrie" },
-  { icon: Bone, name: "Orthopédie" },
-  { icon: Eye, name: "Ophtalmologie" },
-  { icon: Stethoscope, name: "Médecine générale" },
-];
+// Icon map for specialities — fallback to Stethoscope
+const SPEC_ICONS: Record<string, React.ElementType> = {
+  cardiologie: Heart,
+  neurologie: Brain,
+  pédiatrie: Baby,
+  pediatrie: Baby,
+  orthopédie: Bone,
+  orthopedie: Bone,
+  ophtalmologie: Eye,
+  "médecine générale": Stethoscope,
+  "medecine generale": Stethoscope,
+  pneumologie: Wind,
+  biologie: FlaskConical,
+  "analyses médicales": Microscope,
+  dermatologie: Stethoscope,
+  gynécologie: Stethoscope,
+  gynecologie: Stethoscope,
+  chirurgie: Stethoscope,
+  gastro: FlaskConical,
+};
+
+function getSpecIcon(name: string): React.ElementType {
+  const key = name.toLowerCase();
+  for (const [k, Icon] of Object.entries(SPEC_ICONS)) {
+    if (key.includes(k)) return Icon;
+  }
+  return Stethoscope;
+}
 
 function Index() {
+  const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [query, setQuery] = useState("");
+  const [location, setLocation] = useState("");
+  const [doctors, setDoctors] = useState<ApiDoctor[]>([]);
+  const [specialities, setSpecialities] = useState<string[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
+  // Load doctors from API on mount
+  useEffect(() => {
+    fetchDoctors()
+      .then((res) => {
+        const docs = res.data.doctors;
+        setDoctors(docs);
+        // Extract unique specialities
+        const specs = Array.from(new Set(docs.map((d) => d.speciality).filter(Boolean)));
+        setSpecialities(specs);
+      })
+      .catch(() => {
+        // fallback — keep empty, UI handles gracefully
+      });
+  }, []);
+
+  // Tilt effect
   useEffect(() => {
     const el = heroRef.current;
     if (!el) return;
@@ -46,6 +98,42 @@ function Index() {
     el.addEventListener("mousemove", handle);
     return () => el.removeEventListener("mousemove", handle);
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowResults(false);
+        setFocused(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Filtered search results
+  const searchResults = query.trim().length >= 2
+    ? doctors.filter((d) => {
+        const q = query.toLowerCase();
+        const fullName = `${d.firstName} ${d.lastName}`.toLowerCase();
+        return (
+          fullName.includes(q) ||
+          (d.name || "").toLowerCase().includes(q) ||
+          d.speciality.toLowerCase().includes(q)
+        );
+      }).slice(0, 6)
+    : [];
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (query.trim()) {
+      void navigate({ to: "/doctors", search: { q: query, location } as any });
+    }
+  };
+
+  const handleSpecialityClick = (spec: string) => {
+    void navigate({ to: "/doctors", search: { speciality: spec } as any });
+  };
 
   return (
     <div className="min-h-screen bg-transparent">
@@ -117,33 +205,108 @@ function Index() {
               Multiples spécialités. Vrais spécialistes. Une réservation simple.
             </p>
 
-            <form
-              id="book"
-              onSubmit={(e) => e.preventDefault()}
-              className="mx-auto mt-10 flex max-w-3xl flex-col gap-2 rounded-[24px] border border-white/20 bg-white/15 p-2 backdrop-blur-lg md:flex-row"
-            >
-              <div className="flex flex-1 items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
-                <Search className="h-4 w-4 text-white/60" />
-                <input
-                  placeholder="Spécialité ou médecin"
-                  className="w-full bg-transparent text-sm text-white placeholder:text-white/50 outline-none"
-                />
-              </div>
-              <div className="flex flex-1 items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
-                <MapPin className="h-4 w-4 text-white/60" />
-                <input
-                  placeholder="Quartier à Béjaïa"
-                  className="w-full bg-transparent text-sm text-white placeholder:text-white/50 outline-none"
-                />
-              </div>
-              <button className="rounded-xl bg-white px-8 py-3 text-sm font-medium text-[oklch(0.18_0.06_250)] transition hover:bg-white/90">
-                Trouver un médecin
-              </button>
-            </form>
+            {/* Dynamic Search Bar */}
+            <div ref={searchRef} className="relative mx-auto mt-10 max-w-3xl">
+              <form
+                id="book"
+                onSubmit={handleSearch}
+                className="flex flex-col gap-2 rounded-[24px] border border-white/20 bg-white/15 p-2 backdrop-blur-lg md:flex-row"
+              >
+                <div className="flex flex-1 items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
+                  <Search className="h-4 w-4 shrink-0 text-white/60" />
+                  <input
+                    value={query}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      setShowResults(true);
+                    }}
+                    onFocus={() => { setFocused(true); setShowResults(true); }}
+                    placeholder="Spécialité ou nom du médecin"
+                    className="w-full bg-transparent text-sm text-white placeholder:text-white/50 outline-none"
+                    autoComplete="off"
+                  />
+                  {query && (
+                    <button
+                      type="button"
+                      onClick={() => { setQuery(""); setShowResults(false); }}
+                      className="text-white/50 hover:text-white transition"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-1 items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
+                  <MapPin className="h-4 w-4 shrink-0 text-white/60" />
+                  <input
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="Quartier à Béjaïa"
+                    className="w-full bg-transparent text-sm text-white placeholder:text-white/50 outline-none"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="rounded-xl bg-white px-8 py-3 text-sm font-medium text-[oklch(0.18_0.06_250)] transition hover:bg-white/90"
+                >
+                  Trouver un médecin
+                </button>
+              </form>
+
+              {/* Search Results Dropdown */}
+              {showResults && searchResults.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-2xl border border-white/20 bg-[oklch(0.15_0.05_250/0.92)] backdrop-blur-xl shadow-2xl overflow-hidden">
+                  <div className="p-2">
+                    <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white/40">
+                      Résultats ({searchResults.length})
+                    </p>
+                    {searchResults.map((doc) => (
+                      <Link
+                        key={doc._id}
+                        to="/book/$doctorId"
+                        params={{ doctorId: doc._id }}
+                        onClick={() => setShowResults(false)}
+                        className="flex items-center gap-3 rounded-xl px-3 py-3 transition hover:bg-white/10 cursor-pointer"
+                      >
+                        <DefaultAvatar className="h-9 w-9 shrink-0 border border-white/20" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-white truncate">
+                            {doc.firstName} {doc.lastName}
+                          </p>
+                          <p className="text-xs text-white/60">{doc.speciality}</p>
+                        </div>
+                      </Link>
+                    ))}
+                    <Link
+                      to="/doctors"
+                      onClick={() => setShowResults(false)}
+                      className="flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 mt-1 border border-white/10 text-xs font-bold text-white/60 hover:text-white hover:bg-white/10 transition"
+                    >
+                      Voir tous les médecins <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* No results hint */}
+              {showResults && focused && query.trim().length >= 2 && searchResults.length === 0 && (
+                <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-2xl border border-white/20 bg-[oklch(0.15_0.05_250/0.92)] backdrop-blur-xl shadow-2xl p-6 text-center">
+                  <User className="h-8 w-8 mx-auto text-white/20 mb-2" />
+                  <p className="text-sm text-white/50">Aucun médecin trouvé pour « {query} »</p>
+                  <Link
+                    to="/doctors"
+                    onClick={() => setShowResults(false)}
+                    className="mt-3 inline-block text-xs font-bold text-white/70 hover:text-white underline transition"
+                  >
+                    Parcourir tous les médecins
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
+      {/* Dynamic Specialities Section */}
       <section id="specialities" className="mx-auto max-w-6xl px-6 py-24 md:px-12 md:py-32">
         <div className="mb-16 text-center">
           <p className="mb-4 text-xs uppercase tracking-[0.3em] text-muted-foreground">
@@ -152,20 +315,31 @@ function Index() {
           <h2 className="mx-auto max-w-2xl text-3xl font-light tracking-tight text-foreground md:text-5xl">
             Des soins dans chaque discipline
           </h2>
+          {specialities.length > 0 && (
+            <p className="mt-3 text-sm text-muted-foreground">
+              {specialities.length} spécialité{specialities.length > 1 ? "s" : ""} disponible{specialities.length > 1 ? "s" : ""} à UniCare
+            </p>
+          )}
         </div>
         <div className="landing-card grid grid-cols-2 gap-px overflow-hidden rounded-[24px] bg-border md:grid-cols-3">
-          {specialities.map((s) => (
-            <div
-              key={s.name}
-              className="group flex cursor-pointer flex-col gap-4 bg-background p-8 transition hover:bg-secondary md:p-10"
-            >
-              <s.icon className="h-6 w-6 text-[oklch(0.55_0.16_240)]" strokeWidth={1.5} />
-              <div className="text-lg font-medium text-foreground">{s.name}</div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground opacity-0 transition group-hover:opacity-100">
-                Voir les médecins <ArrowRight className="h-3 w-3" />
-              </div>
-            </div>
-          ))}
+          {(specialities.length > 0 ? specialities : [
+            "Cardiologie", "Neurologie", "Pédiatrie", "Orthopédie", "Ophtalmologie", "Médecine générale"
+          ]).map((spec) => {
+            const Icon = getSpecIcon(spec);
+            return (
+              <button
+                key={spec}
+                onClick={() => handleSpecialityClick(spec)}
+                className="group flex cursor-pointer flex-col gap-4 bg-background p-8 transition hover:bg-secondary text-left md:p-10"
+              >
+                <Icon className="h-6 w-6 text-[oklch(0.55_0.16_240)]" strokeWidth={1.5} />
+                <div className="text-lg font-medium text-foreground">{spec}</div>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground opacity-0 transition group-hover:opacity-100">
+                  Voir les médecins <ArrowRight className="h-3 w-3" />
+                </div>
+              </button>
+            );
+          })}
         </div>
       </section>
 
@@ -182,14 +356,40 @@ function Index() {
               Rencontrez les spécialistes derrière UniCare.
             </h2>
             <p className="mt-6 max-w-md text-muted-foreground">
-              Plus de 40 médecins certifiés à Béjaïa, tous au même endroit.
+              {doctors.length > 0
+                ? `${doctors.length} médecins certifiés à Béjaïa, tous au même endroit.`
+                : "Plus de 40 médecins certifiés à Béjaïa, tous au même endroit."}
             </p>
-            <a
-              href="#"
+
+            {/* Quick doctor previews */}
+            {doctors.length > 0 && (
+              <div className="mt-6 space-y-3">
+                {doctors.slice(0, 3).map((doc) => (
+                  <Link
+                    key={doc._id}
+                    to="/book/$doctorId"
+                    params={{ doctorId: doc._id }}
+                    className="flex items-center gap-3 rounded-xl border border-border bg-white/60 p-3 hover:bg-white transition shadow-sm group"
+                  >
+                    <DefaultAvatar className="h-9 w-9 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-ink truncate">
+                        {doc.firstName} {doc.lastName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{doc.speciality}</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            <Link
+              to="/doctors"
               className="mt-8 inline-flex items-center gap-2 border-b border-foreground pb-1 text-sm text-foreground transition-all hover:gap-3"
             >
               Voir tous les médecins <ArrowRight className="h-4 w-4" />
-            </a>
+            </Link>
           </div>
           <div className="relative aspect-4/5 overflow-hidden rounded-2xl bg-[oklch(0.15_0.05_250)]">
             <img
@@ -200,7 +400,6 @@ function Index() {
               width={1024}
               height={1024}
             />
-           
           </div>
         </div>
       </section>

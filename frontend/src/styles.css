@@ -1,8 +1,17 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
+  --radius-3xl: 14px;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -17,55 +26,411 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --color-teal: var(--teal);
   --color-teal-foreground: var(--teal-foreground);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
+/* ─── Global scene background ─────────────────────────────────────────────── */
 :root {
+  /* Soft, airy backdrop inspired by the landing page hero */
+  --bg-scene: linear-gradient(135deg, #f8fbff 0%, #eef5ff 55%, #f8fafc 100%);
+
+  /* Glass surface tokens optimised for the Unicare palette */
+  --glass-bg: rgba(255 255 255 / 0.82);
+  --glass-bg-strong: rgba(255 255 255 / 0.92);
+  --glass-border: rgba(15 23 42 / 0.08);
+  --glass-border-strong: rgba(15 23 42 / 0.16);
+  --glass-blur: blur(20px) saturate(160%);
+  --glass-blur-sm: blur(12px) saturate(130%);
+
   --background: #f8fafc;
   --foreground: #0f172a;
   --ink: #0f172a;
   --ink-soft: #475569;
+
   --card: #ffffff;
   --card-foreground: #0f172a;
   --popover: #ffffff;
   --popover-foreground: #0f172a;
+
   --primary: #06122e;
   --primary-foreground: #ffffff;
+
   --secondary: #eef6ff;
   --secondary-foreground: #12355d;
+
   --muted: #e2e8f0;
   --muted-foreground: #64748b;
+
   --accent: #f5f9ff;
   --accent-foreground: #1d4ed8;
+
+  --destructive: #b91c1c;
+  --destructive-foreground: #ffffff;
+
   --border: rgba(15 23 42 / 0.08);
   --input: rgba(15 23 42 / 0.06);
   --ring: #06122e;
+
   --teal: #2563eb;
   --teal-foreground: #ffffff;
+
+  --chart-1: #0f172a;
+  --chart-2: #1d4ed8;
+  --chart-3: #4338ca;
+  --chart-4: #2563eb;
+  --chart-5: #93c5fd;
+
+  --sidebar: rgba(255 255 255 / 0.65);
+  --sidebar-foreground: #06122e;
+  --sidebar-primary: #06122e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(6, 18, 46, 0.06);
+  --sidebar-accent-foreground: #06122e;
+  --sidebar-border: rgba(6, 18, 46, 0.06);
+  --sidebar-ring: #06122e;
+
   --shadow-soft: 0 12px 40px -24px rgba(6, 18, 46, 0.2);
   --shadow-elevated: 0 24px 70px -30px rgba(6, 18, 46, 0.24);
+  --shadow-glow: 0 16px 45px -24px rgba(6, 18, 46, 0.2);
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-strong: rgba(255, 255, 255, 0.94);
+  --surface-muted: rgba(248, 250, 252, 0.92);
+  --brand: #06122e;
+  --brand-soft: #12355d;
+  --brand-accent: #2563eb;
+  --success: #0f766e;
+  --warning: #b45309;
+  --info: #2563eb;
+  --shadow-card: 0 18px 55px -28px rgba(6, 18, 46, 0.25);
+  --shadow-hover: 0 24px 60px -28px rgba(6, 18, 46, 0.32);
+  --transition-base: 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-html {
-  font-family: var(--font-sans);
-  scroll-behavior: smooth;
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    border-color: var(--color-border);
+  }
+
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    /* Always paint the soft clinical scene from the landing page */
+    background: var(--bg-scene);
+    background-attachment: fixed;
+    color: var(--color-foreground);
+    min-height: 100dvh;
+    font-family: var(--font-sans);
+    letter-spacing: -0.01em;
+  }
+
+  body,
+  button,
+  input,
+  textarea,
+  select,
+  label,
+  p,
+  span,
+  div,
+  li,
+  td,
+  th {
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-sans);
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    background: rgba(59 158 244 / 0.3);
+    color: #fff;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255 255 255 / 0.2);
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255 255 255 / 0.35);
+  }
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f8fbff 0%, #eef5ff 55%, #f8fafc 100%);
-  color: var(--foreground);
-  font-family: var(--font-sans);
+/* ─── Utility classes ──────────────────────────────────────────────────────── */
+
+/* Core glass panel */
+@utility glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-soft);
 }
 
-* {
-  box-sizing: border-box;
+/* Stronger glass (modals, sidebars) */
+@utility glass-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Lightest glass — for nested cards inside glass panels */
+@utility glass-subtle {
+  background: rgba(255 255 255 / 0.06);
+  backdrop-filter: var(--glass-blur-sm);
+  -webkit-backdrop-filter: var(--glass-blur-sm);
+  border: 1px solid rgba(255 255 255 / 0.1);
+}
+
+/* Input field variant */
+@utility glass-input {
+  background: rgba(255 255 255 / 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255 255 255 / 0.18);
+  color: rgba(255 255 255 / 0.92);
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+  outline: none;
+}
+
+/* Shadows */
+@utility shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+
+@utility shadow-elevated {
+  box-shadow: var(--shadow-elevated);
+}
+
+@utility shadow-glow {
+  box-shadow: var(--shadow-glow);
+}
+
+/* Background scene */
+@utility bg-scene {
+  background: var(--bg-scene);
+  background-attachment: fixed;
+}
+
+@layer utilities {
+  .page-shell {
+    @apply mx-auto w-full max-w-7xl rounded-4xl border border-border/80 bg-white/80 p-4 shadow-[0_18px_60px_-24px_rgba(6,18,46,0.25)] backdrop-blur-xl sm:p-6 lg:p-8;
+  }
+
+  .dashboard-surface {
+    @apply rounded-[24px] border border-border/70 bg-white/75 shadow-[0_20px_50px_-28px_rgba(6,18,46,0.25)] backdrop-blur-xl;
+  }
+
+  .hero-panel {
+    @apply rounded-4xl border border-border/70 bg-white/85 shadow-[0_24px_70px_-28px_rgba(6,18,46,0.25)] backdrop-blur-xl;
+  }
+
+  .landing-card {
+    @apply rounded-[24px] border border-border/70 bg-white/80 shadow-[0_18px_60px_-28px_rgba(6,18,46,0.2)] backdrop-blur-xl;
+  }
+
+  .landing-pill {
+    @apply inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-primary;
+  }
+}
+
+/* Orb backgrounds for hero sections */
+@utility bg-orb {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Text utilities */
+@utility text-glass {
+  color: #111827;
+}
+
+@utility text-glass-soft {
+  color: #4b5563;
+}
+
+@utility text-gradient {
+  color: #0f172a;
+}
+
+/* Button pill */
+@utility btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: #0f172a;
+  color: #fff;
+  border: 1px solid rgba(255 255 255 / 0.15);
+  box-shadow: 0 4px 16px rgba(15 23 42 / 0.15);
+  transition:
+    opacity 0.15s,
+    transform 0.1s;
+  cursor: pointer;
+}
+
+@utility btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: rgba(255 255 255 / 0.09);
+  color: rgba(255 255 255 / 0.88);
+  border: 1px solid rgba(255 255 255 / 0.18);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+/* Badge */
+@utility badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Divider */
+@utility glass-divider {
+  border-color: rgba(255 255 255 / 0.12);
+}
+
+/* ==============================================================================
+   Global compatibility overrides
+   Map frequently-used white/card/backdrop utility classes to Unicare glass tokens
+   so existing pages adopt the landing page visual language without per-file edits.
+   ============================================================================== */
+
+/* Match explicit Tailwind class names that include a slash (escaped) and
+   also match by substring to be more resilient. Use !important intentionally
+   to override generated utility classes where needed. */
+
+[class*="bg-white/50"],
+.bg-white\/50 {
+  background: var(--glass-bg) !important;
+}
+
+[class*="bg-white/60"],
+.bg-white\/60 {
+  background: var(--glass-bg-strong) !important;
+}
+
+[class*="bg-white/70"],
+.bg-white\/70 {
+  background: rgba(255, 255, 255, 0.78) !important;
+}
+
+[class*="bg-white/30"],
+.bg-white\/30 {
+  background: rgba(255 255 255 / 0.3) !important;
+}
+
+[class*="bg-slate-50"],
+.bg-slate-50 {
+  background-color: var(--surface-muted) !important;
+}
+
+[class*="bg-slate-100"],
+.bg-slate-100 {
+  background-color: rgba(255, 255, 255, 0.78) !important;
+}
+
+[class*="bg-slate-200"],
+.bg-slate-200 {
+  background-color: rgba(255, 255, 255, 0.88) !important;
+}
+
+[class*="text-slate-500"],
+.text-slate-500 {
+  color: var(--ink-soft) !important;
+}
+
+[class*="text-slate-600"],
+.text-slate-600 {
+  color: var(--ink-soft) !important;
+}
+
+[class*="border-border"],
+.border-border {
+  border-color: var(--glass-border) !important;
+}
+
+[class*="backdrop-blur-sm"],
+.backdrop-blur-sm {
+  backdrop-filter: var(--glass-blur-sm) !important;
+  -webkit-backdrop-filter: var(--glass-blur-sm) !important;
+}
+
+[class*="backdrop-blur-xl"],
+.backdrop-blur-xl {
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+}
+
+/* Buttons using bg-primary keep color but get updated elevation */
+.btn-primary {
+  box-shadow: var(--shadow-glow) !important;
 }

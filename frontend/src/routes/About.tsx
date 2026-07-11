@@ -6,7 +6,7 @@ import { Shield, Lightbulb, ArrowRight, LayoutDashboard } from "lucide-react";
 import { motion } from "framer-motion";
 import { SectionHeading } from "../components/ui-ext/primitives";
 import { stats } from "../lib/data";
-export const Route = createFileRoute("/About")({
+export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
       { title: "About Medicare" },
