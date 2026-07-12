@@ -44,7 +44,7 @@ function SignupPage() {
 
     setLoading(true);
     try {
-      await registerUser({ firstName, lastName, email, password });
+      await registerUser({ firstName, lastName, email, password, passwordConfirm });
       toast.success("Compte créé !", {
         description: `Un code à 6 chiffres a été envoyé à ${email}`,
       });

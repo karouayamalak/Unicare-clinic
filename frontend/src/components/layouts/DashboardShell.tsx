@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 import { authStore, useAuth } from "@/lib/authStore";
+import { logoutUser } from "@/lib/api";
 
 export interface DashNavItem {
   to: string;
@@ -44,7 +45,8 @@ export function DashboardShell({ role, items, children }: Props) {
   const nav = useNavigate();
   const { user } = useAuth();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try { await logoutUser(); } catch { /* ignore */ }
     authStore.logout();
     nav({ to: "/login" });
   };
