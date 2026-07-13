@@ -34,12 +34,23 @@ export async function sendMail({ to, subject, html, attachments }: SendMailOptio
       return;
     }
 
-    // Resend requires onboarding@resend.dev as sender when no custom domain is verified
-    const isResend = env.SMTP_HOST?.includes("resend");
-    const fromAddress = isResend ? "onboarding@resend.dev" : env.FROM_EMAIL;
+    // Determine correct FROM address based on SMTP provider
+    const host = env.SMTP_HOST ?? "";
+    let fromAddress: string;
+    if (host.includes("resend")) {
+      // Resend requires onboarding@resend.dev when no custom domain is verified
+      fromAddress = "onboarding@resend.dev";
+    } else if (host.includes("gmail")) {
+      // Gmail requires FROM to match the authenticated account exactly
+      fromAddress = env.SMTP_USER || env.FROM_EMAIL;
+    } else {
+      fromAddress = env.FROM_EMAIL;
+    }
+
+    console.log(`Sending email via ${host} | from: ${fromAddress} | to: ${to}`);
 
     const info = await transporter.sendMail({
-      from: fromAddress,
+      from: `UniCare <${fromAddress}>`,
       to,
       subject,
       html,
@@ -48,7 +59,7 @@ export async function sendMail({ to, subject, html, attachments }: SendMailOptio
     console.log(` Email sent to ${to} — MessageId: ${info.messageId}`);
   } catch (err: any) {
     console.error(` Email send failed to ${to}: ${err.message}`, err);
-    throw err; // Re-throw so registration fails clearly if email can't be sent
+    // Don't throw — log the error but don't block the registration response
   }
 }
 
