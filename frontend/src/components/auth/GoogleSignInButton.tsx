@@ -147,11 +147,38 @@ export function GoogleSignInButton({
     [setLoading, successMessage],
   );
 
-  const ensureInitialized = useCallback(() => {
-    if (!GOOGLE_CLIENT_ID) return false;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !GOOGLE_CLIENT_ID) return;
+
+    let cancelled = false;
+
+    loadGoogleScript()
+      .then(() => {
+        if (cancelled) return;
+        setScriptReady(true);
+      })
+      .catch((err) => {
+        console.error(err);
+        toast.error("Google Sign-In indisponible", {
+          description: "Impossible de charger le script Google.",
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mounted]);
+
+  // Handle Google SDK initialization and button rendering in a stable hook
+  useEffect(() => {
+    if (!scriptReady || !GOOGLE_CLIENT_ID || !hiddenRef.current) return;
 
     const gId = getGoogle()?.accounts?.id;
-    if (!gId) return false;
+    if (!gId) return;
 
     if (!initializedRef.current) {
       gId.initialize({
@@ -167,47 +194,17 @@ export function GoogleSignInButton({
       initializedRef.current = true;
     }
 
-    if (hiddenRef.current && hiddenRef.current.childElementCount === 0) {
-      hiddenRef.current.innerHTML = "";
-      gId.renderButton(hiddenRef.current, {
-        theme: "outline",
-        size: "large",
-        width: 320,
-        text: "continue_with",
-        type: "standard",
-        shape: "circle",
-      });
-    }
-
-    return true;
-  }, [handleCredential]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted || !GOOGLE_CLIENT_ID) return;
-
-    let cancelled = false;
-
-    loadGoogleScript()
-      .then(() => {
-        if (cancelled) return;
-        setScriptReady(true);
-        ensureInitialized();
-      })
-      .catch((err) => {
-        console.error(err);
-        toast.error("Google Sign-In indisponible", {
-          description: "Impossible de charger le script Google.",
-        });
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [mounted, ensureInitialized]);
+    // Always clear the container before rendering Google's iframe to avoid duplication/clearing conflicts
+    hiddenRef.current.innerHTML = "";
+    gId.renderButton(hiddenRef.current, {
+      theme: "outline",
+      size: "large",
+      width: 320,
+      text: "continue_with",
+      type: "standard",
+      shape: "circle",
+    });
+  }, [scriptReady, handleCredential]);
 
   if (!GOOGLE_CLIENT_ID) {
     return (
