@@ -434,3 +434,32 @@
 .btn-primary {
   box-shadow: var(--shadow-glow) !important;
 }
+
+/* ─── Real Heartbeat Animation ────────────────────────────────────────── */
+@keyframes real-heartbeat {
+  0% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.08);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.11);
+  }
+  70% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-heartbeat {
+  animation: real-heartbeat 1.4s infinite cubic-bezier(0.25, 0.8, 0.25, 1);
+  transform-origin: center;
+  filter: drop-shadow(0 15px 35px rgba(239, 68, 68, 0.25));
+}
+
