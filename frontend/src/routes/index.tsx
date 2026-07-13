@@ -11,7 +11,6 @@ import {
   Eye,
   Stethoscope,
   Search,
-  MapPin,
   ArrowRight,
   Calendar,
   ShieldCheck,
@@ -20,7 +19,6 @@ import {
   Wind,
   FlaskConical,
   X,
-  Star,
   User,
 } from "lucide-react";
 import { DefaultAvatar } from "@/components/ui-ext/primitives";
@@ -63,7 +61,6 @@ function Index() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [query, setQuery] = useState("");
-  const [location, setLocation] = useState("");
   const [doctors, setDoctors] = useState<ApiDoctor[]>([]);
   const [specialities, setSpecialities] = useState<string[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -127,7 +124,9 @@ function Index() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      void navigate({ to: "/doctors", search: { q: query, location } as any });
+      void navigate({ to: "/doctors", search: { q: query } as any });
+    } else {
+      void navigate({ to: "/doctors" });
     }
   };
 
@@ -206,11 +205,11 @@ function Index() {
             </p>
 
             {/* Dynamic Search Bar */}
-            <div ref={searchRef} className="relative mx-auto mt-10 max-w-3xl">
+            <div ref={searchRef} className="relative mx-auto mt-10 max-w-2xl">
               <form
                 id="book"
                 onSubmit={handleSearch}
-                className="flex flex-col gap-2 rounded-[24px] border border-white/20 bg-white/15 p-2 backdrop-blur-lg md:flex-row"
+                className="flex items-center gap-2 rounded-[24px] border border-white/20 bg-white/15 p-2 backdrop-blur-lg"
               >
                 <div className="flex flex-1 items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
                   <Search className="h-4 w-4 shrink-0 text-white/60" />
@@ -221,7 +220,7 @@ function Index() {
                       setShowResults(true);
                     }}
                     onFocus={() => { setFocused(true); setShowResults(true); }}
-                    placeholder="Spécialité ou nom du médecin"
+                    placeholder="Spécialité ou nom du médecin…"
                     className="w-full bg-transparent text-sm text-white placeholder:text-white/50 outline-none"
                     autoComplete="off"
                   />
@@ -235,20 +234,11 @@ function Index() {
                     </button>
                   )}
                 </div>
-                <div className="flex flex-1 items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
-                  <MapPin className="h-4 w-4 shrink-0 text-white/60" />
-                  <input
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="Quartier à Béjaïa"
-                    className="w-full bg-transparent text-sm text-white placeholder:text-white/50 outline-none"
-                  />
-                </div>
                 <button
                   type="submit"
-                  className="rounded-xl bg-white px-8 py-3 text-sm font-medium text-[oklch(0.18_0.06_250)] transition hover:bg-white/90"
+                  className="shrink-0 rounded-xl bg-white px-6 py-3 text-sm font-medium text-[oklch(0.18_0.06_250)] transition hover:bg-white/90"
                 >
-                  Trouver un médecin
+                  Rechercher
                 </button>
               </form>
 
