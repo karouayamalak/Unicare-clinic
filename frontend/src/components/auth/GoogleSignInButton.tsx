@@ -160,6 +160,7 @@ export function GoogleSignInButton({
         width: 320,
         text: "continue_with",
         type: "standard",
+        shape: "circle",
       });
     }
 
@@ -193,53 +194,6 @@ export function GoogleSignInButton({
     };
   }, [mounted, ensureInitialized]);
 
-  const handleClick = () => {
-    if (!GOOGLE_CLIENT_ID) return;
-
-    setLoading(true);
-
-    loadGoogleScript()
-      .then(() => {
-        if (!ensureInitialized()) {
-          throw new Error("Google Sign-In not ready");
-        }
-
-        const gId = getGoogle()?.accounts?.id;
-        if (!gId) throw new Error("Google Sign-In not ready");
-
-        // Try clicking the official hidden Google button first (opens popup reliably)
-        const hiddenBtn =
-          hiddenRef.current?.querySelector('[role="button"]') ??
-          hiddenRef.current?.querySelector("div");
-        if (hiddenBtn instanceof HTMLElement) {
-          hiddenBtn.click();
-          return;
-        }
-
-        // Fallback: One Tap / account chooser prompt
-        gId.prompt((notification) => {
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            const reason =
-              notification.getNotDisplayedReason?.() ||
-              notification.getSkippedReason?.() ||
-              "unknown";
-            console.warn("Google prompt not shown:", reason);
-            toast.error("Connexion Google impossible", {
-              description:
-                "Vérifiez que http://localhost:5173 est autorisé dans Google Cloud Console.",
-            });
-            setLoading(false);
-          }
-        });
-      })
-      .catch(() => {
-        toast.error("Google Sign-In indisponible", {
-          description: "Réessayez dans quelques secondes.",
-        });
-        setLoading(false);
-      });
-  };
-
   if (!GOOGLE_CLIENT_ID) {
     return (
       <p className="text-center text-xs text-ink-soft">
@@ -248,28 +202,18 @@ export function GoogleSignInButton({
     );
   }
 
-  if (!mounted) {
+  if (!mounted || !scriptReady) {
     return (
-      <div className="flex h-11 w-full items-center justify-center rounded-xl border border-border bg-white/60 text-sm text-ink-soft">
+      <div className="flex h-11 w-full items-center justify-center rounded-full border border-border bg-white/60 text-sm text-ink-soft animate-pulse">
         Chargement Google…
       </div>
     );
   }
 
   return (
-    <div className="w-full">
-      {/* Hidden official Google button — triggered programmatically on click */}
-      <div ref={hiddenRef} className="sr-only" aria-hidden />
-
-      <button
-        type="button"
-        disabled={busy || !scriptReady}
-        onClick={handleClick}
-        className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-white py-2.5 text-sm font-semibold text-ink shadow-sm transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        <GoogleIcon />
-        {busy ? "Connexion…" : !scriptReady ? "Chargement Google…" : label}
-      </button>
+    <div className="flex justify-center w-full">
+      <div ref={hiddenRef} className="w-full max-w-[320px] flex justify-center" />
     </div>
   );
 }
+

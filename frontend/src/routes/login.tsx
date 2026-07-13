@@ -243,7 +243,6 @@ function LoginPage() {
 
         <GoogleSignInButton
           onSuccess={handleGoogleSuccess}
-          onLoadingChange={setLoading}
           successMessage="Connexion Google réussie."
         />
       </form>
