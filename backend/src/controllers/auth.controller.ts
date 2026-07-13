@@ -267,17 +267,12 @@ export const googleLogin = async (
 
     let user = await User.findOne({ email });
     if (!user) {
-      const randomPassword = crypto.randomBytes(32).toString("hex");
-      user = await User.create({
-        firstName,
-        lastName,
-        email,
-        password: randomPassword,
-        role: "Patient",
-        isEmailVerified: true,
-        isActive: true,
-        loginAttempts: 0,
-      });
+      return next(
+        new AppError(
+          "Ce compte Google n'est pas enregistré. Veuillez d'abord créer un compte.",
+          400,
+        ),
+      );
     }
 
     const accessToken = generateAccessToken({

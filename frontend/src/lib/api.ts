@@ -1,4 +1,8 @@
-const BASE = (import.meta.env.VITE_API_BASE ?? import.meta.env.VITE_API_URL ?? "http://localhost:5000") + "/api/v1";
+let rawBase = (import.meta.env.VITE_API_BASE ?? import.meta.env.VITE_API_URL ?? "http://localhost:5000").trim();
+if (rawBase.endsWith("/")) {
+  rawBase = rawBase.slice(0, -1);
+}
+const BASE = rawBase.endsWith("/api/v1") ? rawBase : `${rawBase}/api/v1`;
 
 export class ApiError extends Error {
   constructor(
