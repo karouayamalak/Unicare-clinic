@@ -11,6 +11,8 @@ import authRouter from "./routes/auth.routes";
 import doctorRouter from "./routes/doctor.routes";
 import patientProfileRouter from "./routes/patientProfile.routes";
 import dependentRouter from "./routes/dependent.routes";
+import appointmentRouter from "./routes/appointment.routes";
+import logsRouter from "./routes/logs.routes";
 
 const app = express();
 
@@ -82,10 +84,12 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/doctors", doctorRouter);
 app.use("/api/v1/patient-profiles", patientProfileRouter);
 app.use("/api/v1/dependents", dependentRouter);
+app.use("/api/v1/appointments", appointmentRouter);
+app.use("/api/v1/logs", logsRouter);
 
 // ─── 404 wildcard ─────────────────────────────────────────────────────────────
 
-app.all("*", (req, _res, next) => {
+app.all("*any", (req, _res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
