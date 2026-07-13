@@ -119,23 +119,32 @@ export const login = async (
     }
 
     await user.resetLoginAttempts();
-
-    // Generate 6-digit OTP and save hashed version
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
-    user.loginOtpToken = hashedOtp;
-    user.loginOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-    await user.save({ validateBeforeSave: false });
-
-    // Send OTP email
-    sendLoginOtpEmail(user.email, otp, user.firstName).catch(console.error);
-    console.log(` OTP sent for login: ${user.email}`);
-
-    // Do NOT issue tokens yet — client must verify OTP first
+ 
+    // Direct login token generation (OTP bypassed as requested; only verified on account registration)
+    const accessToken = generateAccessToken({ userId: user.id, role: user.role });
+    const refreshToken = generateRefreshToken({ userId: user.id });
+ 
+    const hashedToken = crypto.createHash("sha256").update(refreshToken).digest("hex");
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+ 
+    await Token.create({ user: user._id, token: hashedToken, expiresAt, isRevoked: false });
+ 
+    sendTokens(res, accessToken, refreshToken);
+    console.log(` Login complete for ${user.email}`);
+ 
     res.status(200).json({
-      status: "otp_required",
-      message: "Un code de vérification a été envoyé à votre adresse email.",
-      data: { email: user.email },
+      status: "success",
+      message: "Connexion réussie.",
+      data: {
+        user: {
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          image: user.image,
+        },
+      },
     });
   } catch (error) {
     next(error);
