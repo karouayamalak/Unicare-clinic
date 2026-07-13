@@ -35,15 +35,18 @@ function loadGoogleScript(): Promise<void> {
   return new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[src="${GIS_SCRIPT}"]`);
     if (existing) {
-      const done = () => resolve();
-      if (getGoogle()?.accounts?.id) {
-        done();
-        return;
-      }
-      existing.addEventListener("load", done, { once: true });
-      existing.addEventListener("error", () => reject(new Error("Google script failed")), {
-        once: true,
-      });
+      // Poll for window.google to be populated (handles race condition when async/defer loads it early)
+      let attempts = 0;
+      const interval = setInterval(() => {
+        if (getGoogle()?.accounts?.id) {
+          clearInterval(interval);
+          resolve();
+        } else if (attempts > 60) { // 3 seconds timeout
+          clearInterval(interval);
+          reject(new Error("Google Identity Services script failed to initialize."));
+        }
+        attempts++;
+      }, 50);
       return;
     }
 
@@ -51,7 +54,19 @@ function loadGoogleScript(): Promise<void> {
     script.src = GIS_SCRIPT;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
+    script.onload = () => {
+      let attempts = 0;
+      const interval = setInterval(() => {
+        if (getGoogle()?.accounts?.id) {
+          clearInterval(interval);
+          resolve();
+        } else if (attempts > 40) { // 2 seconds timeout
+          clearInterval(interval);
+          resolve(); // Resolve anyway to let it fail gracefully
+        }
+        attempts++;
+      }, 50);
+    };
     script.onerror = () => reject(new Error("Google script failed to load"));
     document.head.appendChild(script);
   });
