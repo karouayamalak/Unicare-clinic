@@ -33,8 +33,13 @@ export async function sendMail({ to, subject, html, attachments }: SendMailOptio
       console.log(`\n[DEV MOCK EMAIL] to: ${to} | subject: ${subject}\n`);
       return;
     }
+
+    // Resend requires onboarding@resend.dev as sender when no custom domain is verified
+    const isResend = env.SMTP_HOST?.includes("resend");
+    const fromAddress = isResend ? "onboarding@resend.dev" : env.FROM_EMAIL;
+
     const info = await transporter.sendMail({
-      from: env.FROM_EMAIL,
+      from: fromAddress,
       to,
       subject,
       html,
@@ -42,7 +47,8 @@ export async function sendMail({ to, subject, html, attachments }: SendMailOptio
     });
     console.log(` Email sent to ${to} — MessageId: ${info.messageId}`);
   } catch (err: any) {
-    console.error(` Email send failed to ${to}: ${err.message}`);
+    console.error(` Email send failed to ${to}: ${err.message}`, err);
+    throw err; // Re-throw so registration fails clearly if email can't be sent
   }
 }
 
