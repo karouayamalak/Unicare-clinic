@@ -120,7 +120,7 @@ interface DoctorResponse {
   data: { doctor: ApiDoctor };
 }
 
-export const fetchDoctors = (params?: { speciality?: string; status?: string }) => {
+export const fetchDoctors = (params?: { speciality?: string; status?: string; q?: string }) => {
   const qs = params ? "?" + new URLSearchParams(params as Record<string, string>).toString() : "";
   return api.get<DoctorListResponse>(`/doctors${qs}`);
 };

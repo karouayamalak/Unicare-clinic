@@ -11,10 +11,17 @@ export const listDoctors = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const { speciality, status } = req.query as Record<string, string>;
+    const { speciality, status, q } = req.query as Record<string, string>;
     const filter: Record<string, unknown> = {};
     if (speciality) filter.specialitySlug = speciality;
     if (status) filter.status = status;
+    if (q) {
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      filter.$or = [
+        { name: { $regex: escaped, $options: "i" } },
+        { speciality: { $regex: escaped, $options: "i" } },
+      ];
+    }
 
     const doctors = await Doctor.find(filter).sort({ rating: -1 });
 

@@ -35,32 +35,26 @@ const vitals = [
   { label: "SpO₂", value: "98", unit: "%", status: "normal", icon: Activity },
 ];
 
-const quickActions = [
-  {
-    icon: CalendarCheck,
-    label: "Prendre RDV",
-    to: "/doctors",
-    color: "bg-primary/10 text-primary border-primary/20",
-  },
-  {
-    icon: Video,
-    label: "Téléconsultation",
-    to: "/doctors",
-    color: "bg-teal/10 text-teal border-teal/20",
-  },
-  {
-    icon: FileText,
-    label: "Mes ordonnances",
-    to: "/patient/medical",
-    color: "bg-violet-500/10 text-violet-600 border-violet-500/20",
-  },
-  {
-    icon: FileText,
-    label: "Mes Documents",
-    to: "/patient/documents",
-    color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
-  },
-];
+  const quickActions = [
+    {
+      icon: CalendarCheck,
+      label: "Prendre RDV",
+      to: "/doctors",
+      color: "bg-primary/10 text-primary border-primary/20",
+    },
+    {
+      icon: FileText,
+      label: "Mes ordonnances",
+      to: "/patient/medical",
+      color: "bg-violet-500/10 text-violet-600 border-violet-500/20",
+    },
+    {
+      icon: FileText,
+      label: "Mes Documents",
+      to: "/patient/documents",
+      color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+    },
+  ];
 
 function PatientOverview() {
   const { user } = useAuth();

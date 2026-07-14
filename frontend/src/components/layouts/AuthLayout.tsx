@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { CheckCircle2, Lock } from "lucide-react";
 import type { ReactNode } from "react";
 import { Logo } from "../brand/Logo";
-import clinicHero from "@/assets/clinic-hero.png";
+import clinicHero from "../../assets/clinic-hero.png";
 
 export function AuthLayout({
   title,
@@ -56,7 +56,7 @@ export function AuthLayout({
             <img
               src={clinicHero}
               alt="Illustration médicale"
-              className="h-72 w-auto rounded-[32px] object-contain drop-shadow-2xl opacity-95"
+              className="h-72 w-auto rounded-[32px] object-contain opacity-95"
             />
           </div>
 

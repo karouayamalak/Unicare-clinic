@@ -115,7 +115,7 @@ function AdminOverview() {
       escapeCSV(a.date),
       escapeCSV(a.time),
       escapeCSV(a.reason),
-      escapeCSV(a.mode === "Video" ? "Teleconsultation" : "En clinique"),
+      escapeCSV(a.mode === "Video" ? "En ligne" : "En clinique"),
       escapeCSV(a.status),
       a.price || 0,
       escapeCSV(a.receiptNumber || "N/A"),
