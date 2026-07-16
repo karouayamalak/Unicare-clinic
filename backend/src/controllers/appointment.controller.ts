@@ -290,9 +290,10 @@ export const updateStatus = async (
     }
 
     if (user.role === "Patient") {
-      // Patients can only cancel their own appointment
-      if (status !== "Annulé") {
-        return next(new AppError("Les patients peuvent seulement annuler leur rendez-vous.", 403));
+      // Patients can cancel their own appointment or mark themselves as arrived ("En attente" / "Confirmé")
+      const isAllowedStatus = status === "Annulé" || status === "En attente" || status === "Confirmé";
+      if (!isAllowedStatus) {
+        return next(new AppError("Les patients peuvent seulement annuler leur rendez-vous ou signaler leur arrivée.", 403));
       }
       if (appointment.patientId.toString() !== user._id.toString()) {
         return next(new AppError("Not authorized.", 403));
