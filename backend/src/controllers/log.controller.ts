@@ -14,13 +14,17 @@ export const listLogs = async (
       return next(new AppError("Not authorized.", 403));
     }
 
-    const { actorRole, limit } = req.query as Record<string, string>;
+    const { actorRole, objectType, limit } = req.query as Record<string, string>;
     const filter: Record<string, unknown> = {};
 
     if (actorRole) {
       filter.actorRole = {
         $in: actorRole.split(",").map((role) => role.trim()),
       };
+    }
+
+    if (objectType) {
+      filter.objectType = objectType;
     }
 
     const logs = await ActionLog.find(filter)

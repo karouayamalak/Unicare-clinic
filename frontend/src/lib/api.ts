@@ -407,7 +407,7 @@ export const deleteDependent = (id: string) =>
 export const fetchDependentsByParent = (parentEmail: string) =>
   api.get<DependentListResponse>(`/dependents/by-parent/${encodeURIComponent(parentEmail)}`);
 
-export const fetchActionLogs = (params?: { actorRole?: string; limit?: number }) => {
+export const fetchActionLogs = (params?: { actorRole?: string; objectType?: string; limit?: number }) => {
   const qs = params
     ? "?" +
       new URLSearchParams(
