@@ -215,12 +215,17 @@ export const googleLogin = async (
 
     let user = await User.findOne({ email });
     if (!user) {
-      return next(
-        new AppError(
-          "Ce compte Google n'est pas enregistré. Veuillez d'abord créer un compte.",
-          400,
-        ),
-      );
+      // Auto-register new user via Google Sign-In (standard OAuth UX)
+      user = await User.create({
+        firstName,
+        lastName,
+        email,
+        role: "Patient",
+        isEmailVerified: true, // Google emails are pre-verified
+        isActive: true,
+        loginAttempts: 0,
+      });
+      console.log(`Auto-registered new user via Google Sign-In: ${email}`);
     }
 
     const accessToken = generateAccessToken({
