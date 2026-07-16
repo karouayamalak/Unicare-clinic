@@ -39,10 +39,10 @@ function PatientAppointments() {
     load();
   }, []);
 
-  const handleMarkArrived = async (id: string, currentStatus: string) => {
+  const handleMarkArrived = async (id: string) => {
     try {
       await updateAppointmentStatus(id, {
-        status: currentStatus as any, // keep current status, just add arrivedAt
+        status: "En attente", // Confirmé → En attente OR En attente → En attente (self-transition)
         arrivedAt: new Date().toLocaleTimeString("fr-DZ", { hour: "2-digit", minute: "2-digit" }),
       });
       toast.success(
@@ -146,7 +146,7 @@ function PatientAppointments() {
                     </span>
                     {(a.status === "Confirmé" || (a.status === "En attente" && !a.arrivedAt)) ? (
                       <button
-                        onClick={() => handleMarkArrived(a._id, a.status)}
+                        onClick={() => handleMarkArrived(a._id)}
                         className="cursor-pointer inline-flex items-center gap-1 rounded bg-[#0284c7] px-3.5 py-2 text-xs font-bold text-white shadow hover:opacity-90 transition"
                       >
                         Je suis arrivé
