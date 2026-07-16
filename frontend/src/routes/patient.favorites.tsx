@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui-ext/primitives";
+import { useAuth } from "@/lib/authStore";
 import { fetchDoctors, type ApiDoctor } from "@/lib/api";
 import { Heart, Stethoscope, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -43,6 +44,8 @@ function PatientFavorites() {
   };
 
   const favDoctors = doctors.filter((d) => favIds.includes(d._id));
+
+  const { user } = useAuth();
 
   return (
     <div className="space-y-6">
@@ -114,13 +117,22 @@ function PatientFavorites() {
                         />
                       </button>
                     </div>
-                    <Link
-                      to="/book/$doctorId"
-                      params={{ doctorId: d._id }}
-                      className="mt-4 block rounded-xl bg-[#06122e] py-2.5 text-center text-sm font-bold text-white hover:opacity-90 transition shadow-sm"
-                    >
-                      Prendre rendez-vous
-                    </Link>
+                    {user ? (
+                      <Link
+                        to="/doctors"
+                        className="mt-4 block rounded-xl bg-[#06122e] py-2.5 text-center text-sm font-bold text-white hover:opacity-90 transition shadow-sm"
+                      >
+                        Prendre rendez-vous
+                      </Link>
+                    ) : (
+                      <Link
+                        to="/login"
+                        search={{ redirect: "/doctors" }}
+                        className="mt-4 block rounded-xl bg-[#06122e] py-2.5 text-center text-sm font-bold text-white hover:opacity-90 transition shadow-sm"
+                      >
+                        Prendre rendez-vous
+                      </Link>
+                    )}
                   </div>
                 ))}
               </div>
@@ -158,13 +170,22 @@ function PatientFavorites() {
               </div>
               <p className="mt-3 text-xs text-ink-soft truncate">{d.location}</p>
               <p className="text-xs font-bold text-teal mt-0.5">Ouvert 24h/24 · 7j/7</p>
-              <Link
-                to="/book/$doctorId"
-                params={{ doctorId: d._id }}
-                className="mt-4 block rounded-xl bg-[#06122e] py-2.5 text-center text-sm font-bold text-white hover:opacity-90 transition shadow-sm"
-              >
-                Prendre rendez-vous
-              </Link>
+              {user ? (
+                <Link
+                  to="/doctors"
+                  className="mt-4 block rounded-xl bg-[#06122e] py-2.5 text-center text-sm font-bold text-white hover:opacity-90 transition shadow-sm"
+                >
+                  Prendre rendez-vous
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  search={{ redirect: "/doctors" }}
+                  className="mt-4 block rounded-xl bg-[#06122e] py-2.5 text-center text-sm font-bold text-white hover:opacity-90 transition shadow-sm"
+                >
+                  Prendre rendez-vous
+                </Link>
+              )}
             </div>
           ))}
         </div>

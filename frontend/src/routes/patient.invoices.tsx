@@ -19,7 +19,8 @@ function PatientInvoices() {
     <div>
       <PageHeader title="Invoices" description="Payment history and receipts." />
       <div className="overflow-hidden rounded-3xl border border-border bg-white shadow-soft">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
           <thead className="bg-secondary/60 text-xs uppercase tracking-wider text-muted-foreground">
             <tr>
               <th className="px-6 py-3 text-left font-medium">Invoice</th>
@@ -49,6 +50,7 @@ function PatientInvoices() {
             ))}
           </tbody>
         </table>
+      </div>
       </div>
     </div>
   );

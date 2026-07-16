@@ -228,9 +228,8 @@ function AdminDoctors() {
         }
       />
 
-      {/* Filter chips */}
       <div className="flex gap-2 flex-wrap">
-        {["all", "Actif", "Congé", "Inactif"].map((f) => (
+        {["all", "Actif", "Congé"].map((f) => (
           <button
             key={f}
             onClick={() => setStatusFilter(f)}
@@ -673,7 +672,6 @@ function AdminDoctors() {
                   >
                     <option value="Actif">Actif (En service)</option>
                     <option value="Congé">Congé</option>
-                    <option value="Inactif">Inactif (Bloquer l'accès)</option>
                   </select>
                 </div>
               </div>

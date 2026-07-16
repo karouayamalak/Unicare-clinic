@@ -1,39 +1,11 @@
-[data-sidebar="sidebar"] [data-sidebar="menu-badge"] {
-  color: #fff !important;
-  background: rgba(255,255,255,0.06) !important;
-}
-
 @import "tailwindcss";
-/* @source "../src"; */
 @import "tw-animate-css";
-
-/* Force login submit to be black with white text (override theme attribute selectors) */
-#login-submit-btn {
-  background-color: #000 !important;
-  color: #fff !important;
-  border-color: rgba(255,255,255,0.06) !important;
-}
-
-#login-submit-btn:hover {
-  background-color: #0b0b0b !important;
-}
 
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ * Design system — CSS custom properties mapped to Tailwind utilities.
  */
-
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -67,87 +39,34 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0 0 0);
-  --brand-navy: oklch(0 0 0);
-  --brand-blue: oklch(0 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0 0 0);
   --primary: oklch(0 0 0);
   --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0 0 0);
-  --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.2 0 0);
-  --muted-foreground: oklch(0.05 0 0);
-  --accent: oklch(0 0 0);
-  --accent-foreground: oklch(1 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.45 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(1 0 0);
   --border: oklch(0 0 0 / 8%);
   --input: oklch(0 0 0 / 10%);
   --ring: oklch(0 0 0 / 15%);
-  --chart-1: oklch(0 0 0 / 10%);
-  --chart-2: oklch(0 0 0 / 12%);
-  --chart-3: oklch(0 0 0 / 14%);
-  --chart-4: oklch(0 0 0 / 10%);
-  --chart-5: oklch(0 0 0 / 10%);
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0 0 0);
-  --sidebar-primary: oklch(0 0 0);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0 0 0);
-  --sidebar-accent-foreground: oklch(1 0 0);
-  --sidebar-border: oklch(0 0 0 / 10%);
-  --sidebar-ring: oklch(0 0 0 / 15%);
-}
-
-.dark {
-  --background: oklch(0 0 0 / 0.95);
-  --foreground: oklch(1 0 0);
-  --card: oklch(1 0 0 / 0.95);
-  --card-foreground: oklch(0 0 0);
-  --popover: oklch(1 0 0 / 0.95);
-  --popover-foreground: oklch(0 0 0);
-  --primary: oklch(0 0 0);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0 0 0);
-  --secondary-foreground: oklch(1 0 0);
-  --muted: oklch(0.2 0 0);
-  --muted-foreground: oklch(0 0 0);
-  --accent: oklch(0 0 0);
-  --accent-foreground: oklch(1 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0 0 0 / 10%);
-  --input: oklch(0 0 0 / 12%);
-  --ring: oklch(0 0 0 / 15%);
-  --chart-1: oklch(0 0 0 / 10%);
-  --chart-2: oklch(0 0 0 / 10%);
-  --chart-3: oklch(0 0 0 / 10%);
-  --chart-4: oklch(0 0 0 / 10%);
-  --chart-5: oklch(0 0 0 / 10%);
-  --sidebar: oklch(1 0 0 / 0.95);
-  --sidebar-foreground: oklch(0 0 0);
-  --sidebar-primary: oklch(0 0 0);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0 0 0);
-  --sidebar-accent-foreground: oklch(1 0 0);
-  --sidebar-border: oklch(0 0 0 / 10%);
-  --sidebar-ring: oklch(0 0 0 / 15%);
+  --chart-1: oklch(0.4 0.1 250);
+  --chart-2: oklch(0.5 0.12 200);
+  --chart-3: oklch(0.6 0.1 160);
+  --chart-4: oklch(0.55 0.15 100);
+  --chart-5: oklch(0.65 0.12 50);
 }
 
 @layer base {
@@ -158,178 +77,66 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: "Inter", system-ui, sans-serif;
   }
 
-  [class*="bg-teal"] {
-    background-color: var(--color-background) !important;
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
-
-  [class*="text-teal"] {
-    color: var(--color-foreground) !important;
+  ::-webkit-scrollbar-track {
+    background: transparent;
   }
-
-  [class*="border-teal"] {
-    border-color: var(--color-border) !important;
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 9999px;
   }
-
-  [class*="bg-slate-"] {
-    background-color: rgba(255, 255, 255, 0.92) !important;
-  }
-
-  [class*="text-slate-"] {
-    color: rgba(0, 0, 0, 0.65) !important;
-  }
-
-  [class*="border-slate-"] {
-    border-color: rgba(0, 0, 0, 0.1) !important;
-  }
-
-  [class*="bg-[oklch"] {
-    background-color: rgba(255, 255, 255, 0.94) !important;
-  }
-
-  [class*="text-[oklch"] {
-    color: var(--color-foreground) !important;
-  }
-
-  [class*="border-[oklch"] {
-    border-color: rgba(0, 0, 0, 0.12) !important;
-  }
-
-  .bg-brand-gradient {
-    background: rgba(255, 255, 255, 0.92) !important;
-  }
-
-  .text-brand-gradient {
-    color: var(--color-foreground) !important;
-  }
-
-    /* Force landing search button to black/white to override theme overrides */
-    #landing-search-btn {
-      background-color: #000 !important;
-      color: #fff !important;
-      border-color: #000 !important;
-    }
-
-    #landing-search-btn:hover {
-      background-color: #000 !important;
-      filter: brightness(0.95) !important;
-    }
-
-    /* Force browse doctors button to black */
-    #browse-doctors-btn {
-      background-color: #000 !important;
-      color: #fff !important;
-      border-color: #000 !important;
-    }
-
-    #browse-doctors-btn:hover {
-      background-color: #000 !important;
-      filter: brightness(0.95) !important;
-    }
-
-    /* Make the 'Parcourir les médecins' button white with black text */
-    #browse-doctors-btn {
-      background-color: #fff !important;
-      color: #000 !important;
-      border-color: rgba(0,0,0,0.12) !important;
-    }
-
-    #browse-doctors-btn:hover {
-      background-color: #f3f4f6 !important; /* light grey on hover */
-      color: #000 !important;
-    }
-
-    /* Make main book CTA keep black (unchanged) */
-    #book-cta-btn {
-      background-color: #000 !important;
-      color: #fff !important;
-      border-color: #000 !important;
-    }
-
-    #book-cta-btn:hover {
-      background-color: #000 !important;
-      filter: brightness(0.95) !important;
-    }
-
-    /* Specialities: hover should be light grey */
-    #specialities button.group:hover {
-      background-color: #f3f4f6 !important;
-      color: #000 !important;
-    }
-
-    /* Sidebar: make hovered menu items black background and white text for visibility */
-    [data-sidebar="menu-button"]:hover,
-    [data-sidebar="menu-button"][data-active="true"] {
-      background-color: #000 !important;
-      color: #fff !important;
-    }
-
-    [data-sidebar="menu-button"]:hover svg,
-    [data-sidebar="menu-button"][data-active="true"] svg {
-      color: #fff !important;
-    }
-
-    /* Force all primary/action buttons to be black with white text and moderately rounded (12px) */
-    button.bg-primary,
-    button.btn-primary,
-    button[class*="bg-primary"],
-    button[class*="bg-[#06122e]"],
-    a[class*="bg-[#06122e]"],
-    button[class*="bg-teal"],
-    a[class*="bg-teal"],
-    button[class*="bg-sky"],
-    a[class*="bg-sky"] {
-      background-color: #000 !important;
-      color: #fff !important;
-      border-radius: 12px !important;
-      border-color: #000 !important;
-      box-shadow: none !important;
-    }
-
-    button.bg-primary:hover,
-    button.btn-primary:hover,
-    button[class*="bg-primary"]:hover,
-    button[class*="bg-[#06122e]"]:hover,
-    a[class*="bg-[#06122e]"]:hover,
-    button[class*="bg-teal"]:hover,
-    a[class*="bg-teal"]:hover,
-    button[class*="bg-sky"]:hover,
-    a[class*="bg-sky"]:hover {
-      background-color: #1a1a1a !important;
-      color: #fff !important;
-    }
 }
 
-/* Force the app sidebar to be black with white text */
-[data-sidebar="sidebar"] {
+/* ── Force key buttons to stay black regardless of theme overrides ── */
+#landing-search-btn,
+#book-cta-btn {
   background-color: #000 !important;
   color: #fff !important;
-  border-color: rgba(255,255,255,0.06) !important;
+  border-color: #000 !important;
 }
 
-[data-sidebar="sidebar"] [data-sidebar="header"],
-[data-sidebar="sidebar"] [data-sidebar="footer"],
-[data-sidebar="sidebar"] [data-sidebar="group-label"] {
-  color: rgba(255,255,255,0.85) !important;
-}
-
-[data-sidebar="sidebar"] [data-sidebar="menu-button"] {
+/* ── Force primary action buttons (dashboard) to black/rounded ── */
+button[class*="bg-primary"],
+button[class*="bg-[#06122e]"],
+a[class*="bg-[#06122e]"] {
+  background-color: #000 !important;
   color: #fff !important;
-  background-color: transparent !important;
+  border-radius: 12px !important;
+  border-color: #000 !important;
 }
 
-[data-sidebar="sidebar"] [data-sidebar="menu-button"] svg {
+button[class*="bg-primary"]:hover,
+button[class*="bg-[#06122e]"]:hover,
+a[class*="bg-[#06122e]"]:hover {
+  background-color: #1a1a1a !important;
   color: #fff !important;
 }
 
-[data-sidebar="sidebar"] [data-sidebar="separator"] {
-  background-color: rgba(255,255,255,0.06) !important;
-}
+/* ── Responsive utilities ── */
+@layer utilities {
+  .page-container {
+    @apply w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
 
-/* Make sidebar badges and actions visible */
-[data-sidebar="sidebar"] [data-sidebar="menu-badge"] {
-  color: #fff !important;
-  background: rgba(255,255,255,0.06) !important;
-}
+  /* Responsive table wrapper */
+  .table-responsive {
+    @apply w-full overflow-x-auto -mx-4 sm:mx-0;
+  }
 
+  /* Card grid that collapses on mobile */
+  .card-grid {
+    @apply grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3;
+  }
+
+  /* Dashboard stat row */
+  .stat-grid {
+    @apply grid gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4;
+  }
+}

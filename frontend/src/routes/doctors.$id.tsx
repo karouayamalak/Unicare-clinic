@@ -202,12 +202,10 @@ function InfoCard({
 
 function BookCta({ doctorId }: { doctorId: string }) {
   const { user } = useAuth();
-
   if (user) {
     return (
       <Link
-        to="/book/$doctorId"
-        params={{ doctorId }}
+        to="/doctors"
         className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90 transition cursor-pointer"
       >
         <CalendarCheck className="h-4 w-4" />
@@ -219,7 +217,7 @@ function BookCta({ doctorId }: { doctorId: string }) {
   return (
     <Link
       to="/login"
-      search={{ redirect: `/book/${doctorId}` }}
+      search={{ redirect: "/doctors" }}
       className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90 transition cursor-pointer"
     >
       <CalendarCheck className="h-4 w-4" />
