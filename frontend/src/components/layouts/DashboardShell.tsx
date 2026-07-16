@@ -126,8 +126,8 @@ export function DashboardShell({ role, items, children }: Props) {
                     className={cn(
                       "flex items-center gap-3 rounded-full px-3.5 py-2.5 text-sm font-semibold transition",
                       active
-                        ? "bg-white text-black shadow-[0_12px_35px_-18px_rgba(255,255,255,0.2)]"
-                        : "text-zinc-300 hover:bg-white/10 hover:text-white",
+                        ? "bg-[#06122e] text-white shadow-[0_12px_35px_-18px_rgba(6,18,46,0.3)]"
+                        : "text-zinc-700 hover:bg-black/5 hover:text-black",
                     )}
                   >
                     <item.icon className="h-4 w-4 shrink-0" strokeWidth={2} />

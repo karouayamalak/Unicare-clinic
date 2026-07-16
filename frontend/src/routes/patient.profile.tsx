@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui-ext/primitives";
-import { useAuth } from "@/lib/authStore";
-import { useState } from "react";
+import { useAuth, authStore } from "@/lib/authStore";
+import { updateProfile } from "@/lib/api";
+import { useState, useEffect } from "react";
 import { Save, Edit3, Calendar, Droplets, Ruler, Weight, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -22,23 +23,38 @@ function PatientProfile() {
   const fullName = user ? `${user.firstName} ${user.lastName}` : "Amina Bouzid";
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}` : "AB";
 
-  const [profilePic, setProfilePic] = useState<string | null>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(`medigen_profile_pic_${fullName}`) || null;
-    }
-    return null;
-  });
+  const [profilePic, setProfilePic] = useState<string | null>(user?.image || null);
 
-  const handlePicUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (user?.image) {
+      setProfilePic(user.image);
+    }
+  }, [user?.image]);
+
+  const handlePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("L'image est trop volumineuse (max 2 Mo)");
+      return;
+    }
+
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const dataUrl = reader.result as string;
-      localStorage.setItem(`medigen_profile_pic_${fullName}`, dataUrl);
-      setProfilePic(dataUrl);
-      toast.success("Photo de profil mise à jour !");
+      try {
+        const res = await updateProfile({
+          firstName: user?.firstName || "",
+          lastName: user?.lastName || "",
+          image: dataUrl
+        });
+        authStore.login(res.data.user);
+        setProfilePic(dataUrl);
+        toast.success("Photo de profil mise à jour !");
+      } catch (error) {
+        toast.error("Erreur lors de la mise à jour de la photo de profil.");
+      }
     };
     reader.readAsDataURL(file);
   };

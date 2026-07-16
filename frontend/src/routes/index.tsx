@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { authStore, useAuth } from "@/lib/authStore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import heroBg from "@/assets/hero-bg.jpg";
 import doctorPortrait from "@/assets/doctor-portrait.jpg";
@@ -24,9 +25,34 @@ export const Route = createFileRoute("/")({
 const specialityIcons = [Heart, Brain, Baby, Bone, Eye, Stethoscope];
 
 function Index() {
+  const { user, isLoggedIn } = useAuth();
   const heroRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [search, setSearch] = useState("");
+
+  const [clinicName, setClinicName] = useState(() => 
+    localStorage.getItem("unicare:clinic_name") || "UniCare Centre Médical Béjaïa"
+  );
+  const [clinicAddress, setClinicAddress] = useState(() => 
+    localStorage.getItem("unicare:clinic_address") || "Centre Médical Thazmarth, Béjaïa"
+  );
+  const [clinicPhone, setClinicPhone] = useState(() => 
+    localStorage.getItem("unicare:clinic_phone") || "+213 (0)34 12 34 56"
+  );
+  const [clinicEmail, setClinicEmail] = useState(() => 
+    localStorage.getItem("unicare:clinic_email") || "contact@unicare.dz"
+  );
+
+  useEffect(() => {
+    const handleChanged = () => {
+      setClinicName(localStorage.getItem("unicare:clinic_name") || "UniCare Centre Médical Béjaïa");
+      setClinicAddress(localStorage.getItem("unicare:clinic_address") || "Centre Médical Thazmarth, Béjaïa");
+      setClinicPhone(localStorage.getItem("unicare:clinic_phone") || "+213 (0)34 12 34 56");
+      setClinicEmail(localStorage.getItem("unicare:clinic_email") || "contact@unicare.dz");
+    };
+    window.addEventListener("unicare:clinic_settings_changed", handleChanged);
+    return () => window.removeEventListener("unicare:clinic_settings_changed", handleChanged);
+  }, []);
   const [doctors, setDoctors] = useState<ApiDoctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -168,18 +194,29 @@ function Index() {
               <a href="#contact" className="hover:text-black">Contact</a>
             </div>
             <div className="flex items-center gap-2">
-              <Link
-                to="/login"
-                className="text-sm px-4 py-2 rounded-full border border-black/20 text-black hover:bg-black hover:text-white transition"
-              >
-                Connexion
-              </Link>
-              <a
-                href="#book"
-                className="text-sm px-4 py-2 rounded-full border border-black/20 text-black hover:bg-black hover:text-white transition"
-              >
-                Réserver
-              </a>
+              {isLoggedIn && user ? (
+                <Link
+                  to={authStore.dashboardFor(user) as "/"}
+                  className="text-sm px-4 py-2 rounded-full border border-black bg-black text-white hover:bg-slate-900 transition font-medium"
+                >
+                  Mon Espace
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="text-sm px-4 py-2 rounded-full border border-black/20 text-black hover:bg-black hover:text-white transition"
+                  >
+                    Connexion
+                  </Link>
+                  <a
+                    href="#book"
+                    className="text-sm px-4 py-2 rounded-full border border-black/20 text-black hover:bg-black hover:text-white transition"
+                  >
+                    Réserver
+                  </a>
+                </>
+              )}
             </div>
           </nav>
 
@@ -350,22 +387,37 @@ function Index() {
           Votre prochain rendez-vous est à un clic.
         </h2>
         <div className="mt-10 flex flex-col items-center justify-center gap-6">
-          <a
-            href="#book"
-            id="book-cta-btn"
-            className="px-8 py-3 rounded-full bg-black text-white font-medium text-sm hover:bg-slate-900 transition"
-          >
-            Prendre rendez-vous
-          </a>
+          {(() => {
+            const { user } = useAuth();
+            return user ? (
+              <Link
+                to="/doctors"
+                id="book-cta-btn"
+                className="px-8 py-3 rounded-full bg-black text-white font-medium text-sm hover:bg-slate-900 transition"
+              >
+                Prendre rendez-vous
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                search={{ redirect: "/doctors" }}
+                id="book-cta-btn"
+                className="px-8 py-3 rounded-full bg-black text-white font-medium text-sm hover:bg-slate-900 transition"
+              >
+                Prendre rendez-vous
+              </Link>
+            );
+          })()}
 
-          <div className="w-full max-w-xl rounded-2xl bg-white/60 p-6 shadow-soft flex flex-col items-center gap-1">
-            <div className="text-lg font-medium text-black">Clinique UniCare · Béjaïa</div>
-            <div className="text-sm text-black/70">+213 34 56 78 90</div>
-            <div className="text-sm text-black/70">Centre Médical Thazmarth, Béjaïa</div>
+          <div className="w-full max-w-xl rounded-2xl bg-white/60 p-6 shadow-soft flex flex-col items-center gap-1.5">
+            <div className="text-lg font-bold text-black">{clinicName}</div>
+            <div className="text-sm font-semibold text-black/70">{clinicPhone}</div>
+            <div className="text-sm text-black/60">{clinicAddress}</div>
+            <div className="text-xs text-black/50">{clinicEmail}</div>
           </div>
         </div>
         <div className="mt-16 pt-8 border-t border-black/10 flex flex-col md:flex-row justify-between gap-4 text-sm text-black/60">
-          <div>UniCare Clinique · Béjaïa, Algérie</div>
+          <div>{clinicName} · Béjaïa, Algérie</div>
           <div className="flex items-center gap-2"><Clock className="h-4 w-4" /> Ouvert dim–ven · 8h00–20h00</div>
         </div>
       </section>

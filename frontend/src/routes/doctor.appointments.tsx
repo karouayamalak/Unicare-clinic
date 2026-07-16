@@ -73,7 +73,7 @@ const EMPTY_DRUG: DrugLine = { drug: "", dose: "", freq: "", refills: 0, notes: 
 
 const STATUS_COLORS: Record<string, { cls: string; label: string }> = {
   "En attente": { cls: "border-yellow-300 bg-yellow-50 text-yellow-700", label: "Waiting" },
-  "En consultation": { cls: "border-blue-300 bg-blue-50 text-blue-700", label: "In Progress" },
+  "En consultation": { cls: "border-indigo-300 bg-indigo-50 text-indigo-700", label: "In Progress" },
   Terminé: { cls: "border-green-300 bg-green-50 text-green-700", label: "Completed" },
   Annulé: { cls: "border-red-300 bg-red-50 text-red-700", label: "Cancelled" },
 };
