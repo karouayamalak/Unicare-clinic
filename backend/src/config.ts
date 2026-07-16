@@ -24,11 +24,8 @@ const envSchema = z.object({
   COOKIE_SECRET: z
     .string()
     .min(32, "COOKIE_SECRET must be at least 32 characters"),
-  SMTP_HOST: z.string().optional().default(""),
-  SMTP_PORT: z.coerce.number().default(2525),
-  SMTP_USER: z.string().optional().default(""),
-  SMTP_PASS: z.string().optional().default(""),
-  FROM_EMAIL: z.string().email().default("noreply@thazmarth.clinic"),
+  RESEND_API_KEY: z.string().optional().default(""),
+  FROM_EMAIL: z.string().default("onboarding@resend.dev"),
   FRONTEND_URL: z.string().url().default("http://localhost:8082"),
   GOOGLE_CLIENT_ID: z.string().optional().default(""),
   CLINIC_HOLIDAYS: z.string().default(""),

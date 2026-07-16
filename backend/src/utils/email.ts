@@ -1,19 +1,10 @@
-import nodemailer from "nodemailer";
 import { env } from "../config";
 
-// ─── Transporter ──────────────────────────────────────────────────────────────
-
-function createTransporter() {
-  if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) {
-    return null; // Dev mode / mock fallback
-  }
-  return nodemailer.createTransport({
-    host: env.SMTP_HOST,
-    port: env.SMTP_PORT,
-    secure: env.SMTP_PORT === 465,
-    auth: { user: env.SMTP_USER, pass: env.SMTP_PASS },
-  });
-}
+// ─── Email via Resend HTTP API ────────────────────────────────────────────────
+// Uses the Resend REST API directly — no SMTP port issues, works on Vercel.
+// Free tier: 3,000 emails/month. Set RESEND_API_KEY in Vercel env vars.
+// Without a verified domain, FROM must be "onboarding@resend.dev" and
+// emails can only be delivered to the account owner's email address.
 
 interface SendMailOptions {
   to: string;
@@ -27,41 +18,57 @@ interface SendMailOptions {
 }
 
 export async function sendMail({ to, subject, html, attachments }: SendMailOptions) {
+  const apiKey = env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    // Dev mode fallback — print to console
+    console.log(`\n[DEV MOCK EMAIL]\nTo: ${to}\nSubject: ${subject}\n`);
+    return;
+  }
+
   try {
-    const transporter = createTransporter();
-    if (!transporter) {
-      console.log(`\n[DEV MOCK EMAIL] to: ${to} | subject: ${subject}\n`);
-      return;
-    }
+    const from = env.FROM_EMAIL || "onboarding@resend.dev";
 
-    // Determine correct FROM address based on SMTP provider
-    const host = env.SMTP_HOST ?? "";
-    let fromAddress: string;
-    if (host.includes("resend")) {
-      // Resend requires onboarding@resend.dev when no custom domain is verified
-      fromAddress = "onboarding@resend.dev";
-    } else if (host.includes("gmail")) {
-      // Gmail requires FROM to match the authenticated account exactly
-      fromAddress = env.SMTP_USER || env.FROM_EMAIL;
-    } else {
-      fromAddress = env.FROM_EMAIL;
-    }
-
-    console.log(`Sending email via ${host} | from: ${fromAddress} | to: ${to}`);
-
-    const info = await transporter.sendMail({
-      from: `UniCare <${fromAddress}>`,
-      to,
-      subject,
-      html,
-      attachments,
+    // Format attachments for Resend HTTP API (base64 string content)
+    const formattedAttachments = attachments?.map((att) => {
+      const contentBase64 =
+        Buffer.isBuffer(att.content)
+          ? att.content.toString("base64")
+          : Buffer.from(att.content).toString("base64");
+      return {
+        filename: att.filename,
+        content: contentBase64,
+        content_type: att.contentType,
+      };
     });
-    console.log(` Email sent to ${to} — MessageId: ${info.messageId}`);
+
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: `UniCare <${from}>`,
+        to,
+        subject,
+        html,
+        ...(formattedAttachments && { attachments: formattedAttachments }),
+      }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      console.error(` Resend API error [${res.status}]: ${JSON.stringify(data)}`);
+    } else {
+      console.log(` Email sent to ${to} — ID: ${(data as any).id}`);
+    }
   } catch (err: any) {
-    console.error(` Email send failed to ${to}: ${err.message}`, err);
-    // Don't throw — log the error but don't block the registration response
+    console.error(` Email send failed: ${err.message}`);
   }
 }
+
 
 // ─── Verification & Password Resets ──────────────────────────────────────────
 

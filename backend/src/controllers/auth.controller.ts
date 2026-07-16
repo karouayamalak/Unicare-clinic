@@ -4,7 +4,7 @@ import { User } from "../models/user.model";
 import { Token } from "../models/token.model";
 import { Doctor } from "../models/doctor.model";
 import { AppError } from "../middleware/error";
-import { sendVerificationEmail, sendLoginOtpEmail } from "../utils/email";
+import { sendVerificationEmail } from "../utils/email";
 import { verifyGoogleIdToken } from "../utils/googleAuth";
 import {
   generateAccessToken,
@@ -151,67 +151,6 @@ export const login = async (
   }
 };
 
-// ─── Verify Login OTP ─────────────────────────────────────────────────────────
-
-export const verifyLoginOtp = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    const { email, otp } = req.body;
-    if (!email || !otp) {
-      return next(new AppError("Email and OTP code are required.", 400));
-    }
-
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
-    if (!user) {
-      return next(new AppError("Invalid or expired verification code.", 401));
-    }
-
-    if (!user.loginOtpToken || !user.loginOtpExpires || user.loginOtpExpires < new Date()) {
-      return next(new AppError("Le code de vérification a expiré. Veuillez vous reconnecter.", 401));
-    }
-
-    const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
-    if (hashedOtp !== user.loginOtpToken) {
-      return next(new AppError("Code incorrect. Vérifiez votre email et réessayez.", 401));
-    }
-
-    // OTP valid — clear it and issue tokens
-    user.loginOtpToken = undefined;
-    user.loginOtpExpires = undefined;
-    await user.save({ validateBeforeSave: false });
-
-    const accessToken = generateAccessToken({ userId: user.id, role: user.role });
-    const refreshToken = generateRefreshToken({ userId: user.id });
-
-    const hashedToken = crypto.createHash("sha256").update(refreshToken).digest("hex");
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-    await Token.create({ user: user._id, token: hashedToken, expiresAt, isRevoked: false });
-
-    sendTokens(res, accessToken, refreshToken);
-    console.log(` OTP verified — login complete for ${user.email}`);
-
-    res.status(200).json({
-      status: "success",
-      message: "Connexion réussie.",
-      data: {
-        user: {
-          id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          role: user.role,
-          image: user.image,
-        },
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
 
 // ─── Verify Email ─────────────────────────────────────────────────────────────
 
@@ -421,23 +360,6 @@ export const logout = async (
   }
 };
 
-// ─── Logout All Devices ───────────────────────────────────────────────────────
-
-export const logoutAll = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> => {
-  try {
-    await Token.updateMany({ user: req.user!._id }, { isRevoked: true });
-    clearTokens(res);
-    res
-      .status(200)
-      .json({ status: "success", message: "Logged out from all devices." });
-  } catch (error) {
-    next(error);
-  }
-};
 
 // ─── Update Profile ───────────────────────────────────────────────────────────
 

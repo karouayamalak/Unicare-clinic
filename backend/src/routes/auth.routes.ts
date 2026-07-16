@@ -4,11 +4,9 @@ import {
   register,
   login,
   verifyEmail,
-  verifyLoginOtp,
   googleLogin,
   refresh,
   logout,
-  logoutAll,
   updateProfile,
 } from "../controllers/auth.controller";
 import { protect } from "../middleware/auth";
@@ -52,14 +50,12 @@ const googleSchema = z.object({
 
 router.post("/register", validateRequest({ body: registerSchema }), register);
 router.post("/login", validateRequest({ body: loginSchema }), login);
-router.post("/verify-login-otp", verifyLoginOtp);
 router.post("/google", validateRequest({ body: googleSchema }), googleLogin);
 router.post("/verify-email", verifyEmail);
 router.post("/refresh", refresh);
 router.post("/logout", logout);
 
 // Protected routes
-router.post("/logout-all", protect, logoutAll);
 router.patch("/profile", protect, updateProfile);
 
 export default router;
