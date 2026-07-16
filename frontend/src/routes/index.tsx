@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { authStore, useAuth } from "@/lib/authStore";
 import { useEffect, useMemo, useRef, useState } from "react";
 import heroBg from "@/assets/hero-bg.jpg";
@@ -19,10 +19,6 @@ import {
 import { fetchDoctors, type ApiDoctor } from "@/lib/api";
 
 export const Route = createFileRoute("/")({
-  beforeLoad: () => {
-    const user = authStore.user;
-    if (user) throw redirect({ to: authStore.dashboardFor(user) as "/" });
-  },
   component: Index,
 });
 
