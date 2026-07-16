@@ -39,10 +39,10 @@ function PatientAppointments() {
     load();
   }, []);
 
-  const handleMarkArrived = async (id: string) => {
+  const handleMarkArrived = async (id: string, currentStatus: string) => {
     try {
       await updateAppointmentStatus(id, {
-        status: "En attente",
+        status: currentStatus as any, // keep current status, just add arrivedAt
         arrivedAt: new Date().toLocaleTimeString("fr-DZ", { hour: "2-digit", minute: "2-digit" }),
       });
       toast.success(
@@ -144,20 +144,16 @@ function PatientAppointments() {
                     >
                       {a.status === "En attente" && !a.arrivedAt ? "En attente de confirmation" : a.status}
                     </span>
-                    {a.status === "Confirmé" ? (
+                    {(a.status === "Confirmé" || (a.status === "En attente" && !a.arrivedAt)) ? (
                       <button
-                        onClick={() => handleMarkArrived(a._id)}
+                        onClick={() => handleMarkArrived(a._id, a.status)}
                         className="cursor-pointer inline-flex items-center gap-1 rounded bg-[#0284c7] px-3.5 py-2 text-xs font-bold text-white shadow hover:opacity-90 transition"
                       >
                         Je suis arrivé
                       </button>
-                    ) : a.status === "En attente" && a.arrivedAt ? (
+                    ) : a.arrivedAt ? (
                       <span className="text-xs font-bold text-[#0284c7] bg-sky-50 px-3 py-2 rounded border border-sky-100 animate-pulse">
                         Salle d'attente {a.arrivedAt ? `(depuis ${a.arrivedAt})` : ""}
-                      </span>
-                    ) : a.status === "En attente" && !a.arrivedAt ? (
-                      <span className="text-xs font-bold text-amber-700 bg-amber-50 px-3 py-2 rounded border border-amber-100">
-                        En attente de confirmation du médecin
                       </span>
                     ) : (
                       <span className="text-xs font-bold text-slate-500 bg-slate-50 px-3 py-2 rounded border border-slate-100">
