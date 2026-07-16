@@ -185,7 +185,7 @@ function BookingPage() {
         </Link>
 
         <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_360px]">
-          <div className="rounded-2xl border border-border bg-white/50 backdrop-blur-sm p-8 shadow-soft">
+          <div className="rounded-2xl border border-border bg-white/50 backdrop-blur-sm p-4 sm:p-6 md:p-8 shadow-soft">
             <Stepper step={step} />
 
             {step === 1 && (
@@ -439,24 +439,26 @@ function Row({ label, value }: { label: string; value: string }) {
 function Stepper({ step }: { step: number }) {
   const labels = ["Visite", "Planning", "Validation"];
   return (
-    <ol className="flex items-center gap-3">
+    <ol className="flex items-center w-full justify-between gap-2">
       {labels.map((l, i) => {
         const n = i + 1;
         const active = step >= n;
         return (
-          <li key={l} className="flex items-center gap-2">
-            <span
-              className={`grid h-7 w-7 place-items-center rounded-full text-xs font-bold ${
-                active ? "bg-primary text-white" : "bg-slate-100 text-ink-soft"
-              }`}
-            >
-              {n}
-            </span>
-            <span className={`text-xs font-bold ${active ? "text-ink" : "text-ink-soft/70"}`}>
-              {l}
-            </span>
-            {i < labels.length - 1 && <span className="h-px w-6 bg-border/60" />}
-          </li>
+          <div key={l} className="flex items-center flex-1 last:flex-none gap-2">
+            <li className="flex items-center gap-1.5 sm:gap-2">
+              <span
+                className={`grid h-7 w-7 shrink-0 place-items-center rounded-full text-xs font-bold ${
+                  active ? "bg-primary text-white" : "bg-slate-100 text-ink-soft"
+                }`}
+              >
+                {n}
+              </span>
+              <span className={`text-xs font-bold hidden sm:inline whitespace-nowrap ${active ? "text-ink" : "text-ink-soft/70"}`}>
+                {l}
+              </span>
+            </li>
+            {i < labels.length - 1 && <span className="h-px flex-1 bg-border/60 min-w-[8px]" />}
+          </div>
         );
       })}
     </ol>
