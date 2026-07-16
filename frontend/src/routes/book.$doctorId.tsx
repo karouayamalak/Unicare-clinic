@@ -32,32 +32,47 @@ export const Route = createFileRoute("/book/$doctorId")({
   component: BookingPage,
 });
 
-const times = [
-  "00:00", "00:30",
-  "01:00", "01:30",
-  "02:00", "02:30",
-  "03:00", "03:30",
-  "04:00", "04:30",
-  "05:00", "05:30",
-  "06:00", "06:30",
-  "07:00", "07:30",
-  "08:00", "08:30",
-  "09:00", "09:30",
-  "10:00", "10:30",
-  "11:00", "11:30",
-  "12:00", "12:30",
-  "13:00", "13:30",
-  "14:00", "14:30",
-  "15:00", "15:30",
-  "16:00", "16:30",
-  "17:00", "17:30",
-  "18:00", "18:30",
-  "19:00", "19:30",
-  "20:00", "20:30",
-  "21:00", "21:30",
-  "22:00", "22:30",
-  "23:00", "23:30",
-];
+// Helper: convert "HH:MM" to total minutes
+const toMinutes = (t: string) => {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + (m || 0);
+};
+
+// Helper: all 30-minute slots in a day
+const ALL_TIMES: string[] = Array.from({ length: 48 }, (_, i) => {
+  const h = String(Math.floor(i / 2)).padStart(2, "0");
+  const m = i % 2 === 0 ? "00" : "30";
+  return `${h}:${m}`;
+});
+
+// Filter slots to only those within doctor working hours and not in a break
+function getAvailableSlots(doctor: ApiDoctor): string[] {
+  const open = toMinutes(doctor.availableHours.start);
+  const close = toMinutes(doctor.availableHours.end);
+  const breaks = doctor.breaks ?? [];
+
+  return ALL_TIMES.filter((t) => {
+    const start = toMinutes(t);
+    const end = start + 30;
+
+    // Must be within working hours
+    const inHours = open < close
+      ? start >= open && end <= close
+      : start >= open || end <= close; // cross-midnight shift
+    if (!inHours) return false;
+
+    // Must not overlap any break
+    for (const br of breaks) {
+      const bStart = toMinutes(br.start);
+      const bEnd = toMinutes(br.end);
+      if (start < bEnd && bStart < end) return false;
+    }
+    return true;
+  });
+}
+
+// French day names matching the backend
+const FR_DAY_NAMES = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
 function BookingPage() {
   const { user } = useAuth();
@@ -97,8 +112,11 @@ function BookingPage() {
     loadDependents();
   }, [user]);
 
-  // Clinic is open 24/7 — allow same-day booking, show 14 days ahead
-  const dates = Array.from({ length: 14 }).map((_, i) => addDays(new Date(), i));
+  // Clinic shows 14 days ahead
+  const dates = Array.from({ length: 14 }, (_, i) => addDays(new Date(), i));
+
+  // Pre-compute available time slots for this doctor (respects working hours + breaks)
+  const availableSlots = getAvailableSlots(d);
 
   // Fetch already-booked slots for the selected date (public endpoint)
   useEffect(() => {
@@ -256,11 +274,14 @@ function BookingPage() {
                 <div className="mt-6 flex gap-2 overflow-x-auto pb-2">
                   {dates.map((date, i) => {
                     const formattedDateStr = format(date, "yyyy-MM-dd");
+                    const dayName = FR_DAY_NAMES[date.getDay()];
+                    const isNonWorkingDay = !d.availableDays.includes(dayName);
                     const isDayBlocked =
                       d.blockedSlots?.some(
                         (s) => s.date === formattedDateStr && !s.hour,
                       ) ||
-                      (d.vacationDays ?? []).includes(formattedDateStr);
+                      (d.vacationDays ?? []).includes(formattedDateStr) ||
+                      isNonWorkingDay;
                     return (
                       <button
                         key={i}
@@ -273,11 +294,12 @@ function BookingPage() {
                         className={cn(
                           "min-w-[80px] rounded-md border p-3 text-center transition",
                           isDayBlocked
-                            ? "border-red-200 bg-red-50 text-red-500 cursor-not-allowed opacity-70"
+                            ? "border-red-200 bg-red-50 text-red-400 cursor-not-allowed opacity-80"
                             : dateIdx === i
                               ? "border-[#0284c7] bg-sky-50 text-[#0284c7] cursor-pointer"
                               : "border-slate-200 bg-white hover:border-[#0284c7]/40 text-slate-700 cursor-pointer",
                         )}
+                        title={isNonWorkingDay ? `${d.name} ne travaille pas le ${dayName}` : isDayBlocked ? "Jour non disponible" : undefined}
                       >
                         <p className="text-[10px] uppercase font-bold tracking-wider opacity-85">
                           {format(date, "EEE", { locale: fr })}
@@ -286,13 +308,20 @@ function BookingPage() {
                         <p className="text-[10px] opacity-75 font-medium">
                           {format(date, "MMM", { locale: fr })}
                         </p>
+                        {isDayBlocked && (
+                          <p className="text-[8px] font-bold text-red-400 mt-0.5">Fermé</p>
+                        )}
                       </button>
                     );
                   })}
                 </div>
 
                 <div className="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-4">
-                  {times.map((t) => {
+                  {availableSlots.length === 0 ? (
+                    <p className="col-span-4 text-sm text-ink-soft text-center py-6">
+                      Aucun créneau disponible pour ce médecin.
+                    </p>
+                  ) : availableSlots.map((t) => {
                     const selectedDateStr = format(dates[dateIdx], "yyyy-MM-dd");
                     const isSlotBlocked = d.blockedSlots?.some(
                       (s) => s.date === selectedDateStr && s.hour === t,

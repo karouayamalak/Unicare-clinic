@@ -103,6 +103,8 @@ export interface ApiDoctor {
   patients: number;
   availableDays: string[];
   availableHours: { start: string; end: string };
+  breaks?: Array<{ start: string; end: string }>;
+  vacationDays?: string[];
   languages: string[];
   status: "Actif" | "Inactif" | "Congé";
   blockedSlots?: Array<{ _id: string; date: string; hour?: string }>;
