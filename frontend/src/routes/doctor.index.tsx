@@ -119,17 +119,19 @@ function DoctorOverview() {
   const pendingConfirmationAppointments = appointmentsList.filter(
     (a) => a.status === "En attente" && !a.arrivedAt,
   );
-  // Patients physically in the waiting room (arrived or in consultation)
+  // Patients physically in the waiting room:
+  // - "En attente" WITH arrivedAt (patient clicked Arriver)
+  // - "Confirmé" WITH arrivedAt (patient arrived but doc hasn't moved to En attente)
+  // - "En consultation" (currently being seen)
   const waitingAppointments = appointmentsList.filter(
     (a) =>
       a.status !== "Terminé" &&
       a.status !== "Annulé" &&
-      a.status !== "En attente" &&
       (a.arrivedAt || a.status === "En consultation"),
   );
   const completedCount = appointmentsList.filter((a) => a.status === "Terminé").length;
   const waitingRoomCount = waitingAppointments.filter(
-    (a) => a.status === "En attente" || a.status === "En consultation",
+    (a) => a.arrivedAt || a.status === "En consultation",
   ).length;
 
   // Patient dossier state

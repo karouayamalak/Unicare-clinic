@@ -278,7 +278,7 @@ export const updateStatus = async (
 
     const currentStatus = appointment.status;
     const allowedTransitions: Record<string, string[]> = {
-      "En attente": ["Confirmé", "En consultation", "Terminé", "Annulé"],
+      "En attente": ["En attente", "Confirmé", "En consultation", "Terminé", "Annulé"], // self-transition for arrivedAt signal
       Confirmé: ["En attente", "En consultation", "Terminé", "Annulé"],
       "En consultation": ["Terminé", "Annulé"],
       Terminé: [],
