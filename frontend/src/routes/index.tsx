@@ -204,6 +204,7 @@ function Index() {
                   </Link>
                   <Link
                     to="/doctors"
+                    style={{ backgroundColor: "#000", color: "#fff" }}
                     className="text-sm px-4 py-2 rounded-full border border-black bg-black text-white hover:bg-slate-900 transition font-medium"
                   >
                     Réserver
@@ -220,6 +221,7 @@ function Index() {
                   <Link
                     to="/login"
                     search={{ redirect: "/doctors" }}
+                    style={{ backgroundColor: "#000", color: "#fff" }}
                     className="text-sm px-4 py-2 rounded-full border border-black bg-black text-white hover:bg-slate-900 transition font-medium"
                   >
                     Réserver
