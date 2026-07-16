@@ -205,7 +205,8 @@ function BookCta({ doctorId }: { doctorId: string }) {
   if (user) {
     return (
       <Link
-        to="/doctors"
+        to="/book/$doctorId"
+        params={{ doctorId }}
         className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90 transition cursor-pointer"
       >
         <CalendarCheck className="h-4 w-4" />
@@ -217,7 +218,7 @@ function BookCta({ doctorId }: { doctorId: string }) {
   return (
     <Link
       to="/login"
-      search={{ redirect: "/doctors" }}
+      search={{ redirect: `/book/${doctorId}` }}
       className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-soft hover:opacity-90 transition cursor-pointer"
     >
       <CalendarCheck className="h-4 w-4" />
