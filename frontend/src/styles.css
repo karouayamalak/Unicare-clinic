@@ -1,6 +1,22 @@
+[data-sidebar="sidebar"] [data-sidebar="menu-badge"] {
+  color: #fff !important;
+  background: rgba(255,255,255,0.06) !important;
+}
+
 @import "tailwindcss";
 /* @source "../src"; */
 @import "tw-animate-css";
+
+/* Force login submit to be black with white text (override theme attribute selectors) */
+#login-submit-btn {
+  background-color: #000 !important;
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.06) !important;
+}
+
+#login-submit-btn:hover {
+  background-color: #0b0b0b !important;
+}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -253,4 +269,67 @@
     [data-sidebar="menu-button"][data-active="true"] svg {
       color: #fff !important;
     }
+
+    /* Force all primary/action buttons to be black with white text and moderately rounded (12px) */
+    button.bg-primary,
+    button.btn-primary,
+    button[class*="bg-primary"],
+    button[class*="bg-[#06122e]"],
+    a[class*="bg-[#06122e]"],
+    button[class*="bg-teal"],
+    a[class*="bg-teal"],
+    button[class*="bg-sky"],
+    a[class*="bg-sky"] {
+      background-color: #000 !important;
+      color: #fff !important;
+      border-radius: 12px !important;
+      border-color: #000 !important;
+      box-shadow: none !important;
+    }
+
+    button.bg-primary:hover,
+    button.btn-primary:hover,
+    button[class*="bg-primary"]:hover,
+    button[class*="bg-[#06122e]"]:hover,
+    a[class*="bg-[#06122e]"]:hover,
+    button[class*="bg-teal"]:hover,
+    a[class*="bg-teal"]:hover,
+    button[class*="bg-sky"]:hover,
+    a[class*="bg-sky"]:hover {
+      background-color: #1a1a1a !important;
+      color: #fff !important;
+    }
 }
+
+/* Force the app sidebar to be black with white text */
+[data-sidebar="sidebar"] {
+  background-color: #000 !important;
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.06) !important;
+}
+
+[data-sidebar="sidebar"] [data-sidebar="header"],
+[data-sidebar="sidebar"] [data-sidebar="footer"],
+[data-sidebar="sidebar"] [data-sidebar="group-label"] {
+  color: rgba(255,255,255,0.85) !important;
+}
+
+[data-sidebar="sidebar"] [data-sidebar="menu-button"] {
+  color: #fff !important;
+  background-color: transparent !important;
+}
+
+[data-sidebar="sidebar"] [data-sidebar="menu-button"] svg {
+  color: #fff !important;
+}
+
+[data-sidebar="sidebar"] [data-sidebar="separator"] {
+  background-color: rgba(255,255,255,0.06) !important;
+}
+
+/* Make sidebar badges and actions visible */
+[data-sidebar="sidebar"] [data-sidebar="menu-badge"] {
+  color: #fff !important;
+  background: rgba(255,255,255,0.06) !important;
+}
+

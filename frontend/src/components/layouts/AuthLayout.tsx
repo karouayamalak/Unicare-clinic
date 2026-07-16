@@ -3,6 +3,7 @@ import { CheckCircle2, Lock } from "lucide-react";
 import type { ReactNode } from "react";
 import { Logo } from "../brand/Logo";
 import clinicHero from "../../assets/clinic-hero.png";
+import { cn } from "@/lib/utils";
 
 export function AuthLayout({
   title,
@@ -97,12 +98,12 @@ export function AuthField({ label, ...props }: { label: string } & React.InputHT
   );
 }
 
-export function AuthButton({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+export function AuthButton({ children, className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const base =
+    "w-full cursor-pointer rounded-full bg-black py-3.5 text-sm font-bold text-white shadow-[0_16px_45px_-20px_rgba(0,0,0,0.35)] transition hover:-translate-y-0.5 hover:bg-slate-900 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60";
+
   return (
-    <button
-      {...props}
-      className="w-full cursor-pointer rounded-full bg-[oklch(0.18_0.06_250)] py-3.5 text-sm font-bold text-white shadow-[0_16px_45px_-20px_rgba(7,17,30,0.35)] transition hover:-translate-y-0.5 hover:bg-[oklch(0.2_0.06_250)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
-    >
+    <button {...props} className={cn(base, className)}>
       {children}
     </button>
   );

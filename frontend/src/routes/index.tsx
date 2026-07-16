@@ -195,12 +195,20 @@ function Index() {
             </div>
             <div className="flex items-center gap-2">
               {isLoggedIn && user ? (
-                <Link
-                  to={authStore.dashboardFor(user) as "/"}
-                  className="text-sm px-4 py-2 rounded-full border border-black bg-black text-white hover:bg-slate-900 transition font-medium"
-                >
-                  Mon Espace
-                </Link>
+                <>
+                  <Link
+                    to={authStore.dashboardFor(user) as "/"}
+                    className="text-sm px-4 py-2 rounded-full border border-black/20 text-black hover:bg-black hover:text-white transition font-medium"
+                  >
+                    Mon Espace
+                  </Link>
+                  <Link
+                    to="/doctors"
+                    className="text-sm px-4 py-2 rounded-full border border-black bg-black text-white hover:bg-slate-900 transition font-medium"
+                  >
+                    Réserver
+                  </Link>
+                </>
               ) : (
                 <>
                   <Link
@@ -209,12 +217,13 @@ function Index() {
                   >
                     Connexion
                   </Link>
-                  <a
-                    href="#book"
-                    className="text-sm px-4 py-2 rounded-full border border-black/20 text-black hover:bg-black hover:text-white transition"
+                  <Link
+                    to="/login"
+                    search={{ redirect: "/doctors" }}
+                    className="text-sm px-4 py-2 rounded-full border border-black bg-black text-white hover:bg-slate-900 transition font-medium"
                   >
                     Réserver
-                  </a>
+                  </Link>
                 </>
               )}
             </div>
