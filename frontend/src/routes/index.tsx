@@ -178,7 +178,8 @@ function Index() {
             width={1920}
             height={1280}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-white/80 via-white/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-white/60" />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/60 via-transparent to-transparent" />
         </div>
 
         <div className="relative z-10">
@@ -198,14 +199,15 @@ function Index() {
                 <>
                   <Link
                     to={authStore.dashboardFor(user) as "/"}
-                    className="text-sm px-4 py-2 rounded-full border border-black/20 text-black hover:bg-black hover:text-white transition font-medium"
+                    style={{ background: "rgba(255,255,255,0.85)", color: "#000", backdropFilter: "blur(8px)" }}
+                    className="text-sm px-4 py-2 rounded-full border border-black/20 font-medium transition hover:bg-white"
                   >
                     Mon Espace
                   </Link>
                   <Link
                     to="/doctors"
-                    style={{ backgroundColor: "#000", color: "#fff" }}
-                    className="text-sm px-4 py-2 rounded-full border border-black bg-black text-white hover:bg-slate-900 transition font-medium"
+                    style={{ background: "#000", color: "#fff", boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }}
+                    className="text-sm px-4 py-2 rounded-full font-bold transition hover:opacity-80"
                   >
                     Réserver
                   </Link>
@@ -214,15 +216,16 @@ function Index() {
                 <>
                   <Link
                     to="/login"
-                    className="text-sm px-4 py-2 rounded-full border border-black/20 text-black hover:bg-black hover:text-white transition"
+                    style={{ background: "rgba(255,255,255,0.85)", color: "#000", backdropFilter: "blur(8px)" }}
+                    className="text-sm px-4 py-2 rounded-full border border-black/20 font-medium transition hover:bg-white"
                   >
                     Connexion
                   </Link>
                   <Link
                     to="/login"
                     search={{ redirect: "/doctors" }}
-                    style={{ backgroundColor: "#000", color: "#fff" }}
-                    className="text-sm px-4 py-2 rounded-full border border-black bg-black text-white hover:bg-slate-900 transition font-medium"
+                    style={{ background: "#000", color: "#fff", boxShadow: "0 4px 20px rgba(0,0,0,0.4)" }}
+                    className="text-sm px-4 py-2 rounded-full font-bold transition hover:opacity-80"
                   >
                     Réserver
                   </Link>
