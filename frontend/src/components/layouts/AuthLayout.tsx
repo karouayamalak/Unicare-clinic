@@ -100,7 +100,7 @@ export function AuthField({ label, ...props }: { label: string } & React.InputHT
 
 export function AuthButton({ children, className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const base =
-    "w-full cursor-pointer rounded-full bg-black py-3.5 text-sm font-bold text-white shadow-[0_16px_45px_-20px_rgba(0,0,0,0.35)] transition hover:-translate-y-0.5 hover:bg-slate-900 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60";
+    "w-full cursor-pointer rounded-full border-2 border-black bg-white py-3.5 text-sm font-bold text-black shadow-[0_16px_45px_-20px_rgba(0,0,0,0.15)] transition hover:-translate-y-0.5 hover:bg-black hover:text-white active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60";
 
   return (
     <button {...props} className={cn(base, className)}>

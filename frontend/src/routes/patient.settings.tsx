@@ -16,7 +16,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Shield,
   Camera,
   Plus,
   Trash2,
@@ -40,9 +39,6 @@ function PatientSettings() {
   const [address, setAddress] = useState("Béjaïa, Algérie");
   const [image, setImage] = useState(user?.image ?? "");
 
-  const [notifEmail, setNotifEmail] = useState(true);
-  const [notifSms, setNotifSms] = useState(false);
-  const [notifAppt, setNotifAppt] = useState(true);
 
   // Dependents management
   const [dependents, setDependents] = useState<ApiDependent[]>([]);
@@ -292,56 +288,6 @@ function PatientSettings() {
         </div>
       </div>
 
-      {/* Notifications */}
-      <div className="rounded-2xl border border-border bg-white/50 p-6 backdrop-blur-sm shadow-soft space-y-4">
-        <h3 className="text-sm font-bold text-ink flex items-center gap-2">
-          <Shield className="h-4 w-4 text-ink-soft" /> Notifications & Confidentialité
-        </h3>
-        {[
-          {
-            label: "Rappels de rendez-vous par e-mail",
-            desc: "Rappels 24h avant chaque consultation",
-            val: notifEmail,
-            set: setNotifEmail,
-          },
-          {
-            label: "Rappels par SMS",
-            desc: "Rappels 2h avant chaque consultation",
-            val: notifSms,
-            set: setNotifSms,
-          },
-          {
-            label: "Nouvelles ordonnances",
-            desc: "Être notifié lorsqu'une ordonnance est disponible",
-            val: notifAppt,
-            set: setNotifAppt,
-          },
-        ].map((n) => (
-          <div
-            key={n.label}
-            className="flex items-center justify-between rounded-xl border border-border/50 bg-white/40 px-4 py-3.5 shadow-sm"
-          >
-            <div>
-              <p className="text-sm font-semibold text-ink">{n.label}</p>
-              <p className="text-xs text-ink-soft/70 mt-0.5">{n.desc}</p>
-            </div>
-            <button
-              onClick={() => n.set(!n.val)}
-              className={cn(
-                "relative h-6 w-11 rounded-full transition-colors duration-200 focus:outline-none cursor-pointer",
-                n.val ? "bg-primary" : "bg-slate-200",
-              )}
-            >
-              <span
-                className={cn(
-                  "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200",
-                  n.val ? "translate-x-5" : "translate-x-0.5",
-                )}
-              />
-            </button>
-          </div>
-        ))}
-      </div>
 
       {/* Dependents/Children Management */}
       <div className="rounded-2xl border border-border bg-white/50 p-6 backdrop-blur-sm shadow-soft space-y-4">
@@ -601,16 +547,6 @@ function PatientSettings() {
         </div>
       )}
 
-      {/* Security */}
-      <div className="rounded-2xl border border-border bg-white/50 p-6 backdrop-blur-sm shadow-soft space-y-4">
-        <h3 className="text-sm font-bold text-ink">Sécurité</h3>
-        <button
-          onClick={() => toast.info("Un e-mail de réinitialisation a été envoyé.")}
-          className="rounded-xl border border-border bg-white/70 px-4 py-2.5 text-sm font-semibold text-ink hover:bg-white transition shadow-sm cursor-pointer"
-        >
-          Changer de mot de passe
-        </button>
-      </div>
     </div>
   );
 }

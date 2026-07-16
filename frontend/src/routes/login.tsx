@@ -235,8 +235,6 @@ function LoginPage() {
           id="login-submit-btn"
           type="submit"
           disabled={loading}
-          className="bg-black text-white hover:bg-slate-900"
-          style={{ backgroundColor: "#000", color: "#fff" }}
         >
           {loading ? "Connexion…" : "Se connecter"}
         </AuthButton>
