@@ -215,11 +215,15 @@ export const googleLogin = async (
 
     let user = await User.findOne({ email });
     if (!user) {
+      // Generate a secure random password to satisfy database model validation requirements
+      const generatedPassword = crypto.randomBytes(16).toString("hex") + "aA1!";
+
       // Auto-register new user via Google Sign-In (standard OAuth UX)
       user = await User.create({
         firstName,
         lastName,
         email,
+        password: generatedPassword,
         role: "Patient",
         isEmailVerified: true, // Google emails are pre-verified
         isActive: true,
