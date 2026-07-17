@@ -1,6 +1,6 @@
 import { type DrugLine } from "./api";
 
-export function printReceipt(receipt: {
+export function getReceiptHtml(receipt: {
   receiptNumber: string;
   date: string;
   doctorName: string;
@@ -9,13 +9,7 @@ export function printReceipt(receipt: {
   patientEmail: string;
   price: number;
 }) {
-  const win = window.open("", "_blank", "width=900,height=940");
-  if (!win) {
-    alert("Veuillez autoriser les popups pour pouvoir imprimer le reçu.");
-    return;
-  }
-
-  const html = `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -115,21 +109,12 @@ export function printReceipt(receipt: {
           <span class="id">DOC : REC-${receipt.receiptNumber.split("-")[1] || "SEC"}</span>
         </div>
       </div>
-      <script>
-        window.onload = function() {
-          window.print();
-          setTimeout(function() { window.close(); }, 500);
-        };
-      </script>
     </body>
     </html>
   `;
-
-  win.document.write(html);
-  win.document.close();
 }
 
-export function printOrdonnance(rx: {
+export function getOrdonnanceHtml(rx: {
   id: string;
   date: string;
   doctorName: string;
@@ -141,18 +126,12 @@ export function printOrdonnance(rx: {
   notes?: string;
   drugs?: DrugLine[];
 }) {
-  const win = window.open("", "_blank", "width=900,height=940");
-  if (!win) {
-    alert("Veuillez autoriser les popups pour pouvoir imprimer l'ordonnance.");
-    return;
-  }
-
   const drugsList =
     rx.drugs && rx.drugs.length > 0
       ? rx.drugs
       : [{ drug: rx.drug, dose: rx.dose, freq: rx.freq, refills: rx.refills, notes: rx.notes }];
 
-  const html = `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -261,6 +240,40 @@ export function printOrdonnance(rx: {
           </div>
         </div>
       </div>
+    </body>
+    </html>
+  `;
+}
+
+export function openDocumentInTab(html: string) {
+  const win = window.open("", "_blank");
+  if (!win) {
+    alert("Veuillez autoriser les popups pour pouvoir ouvrir le document.");
+    return;
+  }
+  win.document.write(html);
+  win.document.close();
+}
+
+export function printReceipt(receipt: {
+  receiptNumber: string;
+  date: string;
+  doctorName: string;
+  speciality: string;
+  patientName: string;
+  patientEmail: string;
+  price: number;
+}) {
+  const win = window.open("", "_blank", "width=900,height=940");
+  if (!win) {
+    alert("Veuillez autoriser les popups pour pouvoir imprimer le reçu.");
+    return;
+  }
+
+  const html = getReceiptHtml(receipt);
+  
+  // Inject print JS
+  const printHtml = html.replace("</body>", `
       <script>
         window.onload = function() {
           window.print();
@@ -268,9 +281,43 @@ export function printOrdonnance(rx: {
         };
       </script>
     </body>
-    </html>
-  `;
+  `);
 
-  win.document.write(html);
+  win.document.write(printHtml);
+  win.document.close();
+}
+
+export function printOrdonnance(rx: {
+  id: string;
+  date: string;
+  doctorName: string;
+  patientName: string;
+  drug: string;
+  dose: string;
+  freq: string;
+  refills: number;
+  notes?: string;
+  drugs?: DrugLine[];
+}) {
+  const win = window.open("", "_blank", "width=900,height=940");
+  if (!win) {
+    alert("Veuillez autoriser les popups pour pouvoir imprimer l'ordonnance.");
+    return;
+  }
+
+  const html = getOrdonnanceHtml(rx);
+
+  // Inject print JS
+  const printHtml = html.replace("</body>", `
+      <script>
+        window.onload = function() {
+          window.print();
+          setTimeout(function() { window.close(); }, 500);
+        };
+      </script>
+    </body>
+  `);
+
+  win.document.write(printHtml);
   win.document.close();
 }

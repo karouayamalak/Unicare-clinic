@@ -9,6 +9,7 @@ import {
   fetchAppointments,
   fetchDoctors,
   updateAppointmentStatus,
+  updatePrescription,
   fetchPatientProfile,
   fetchDependentsByParent,
   type ApiAppointment,
@@ -31,6 +32,7 @@ import {
   AlertCircle,
   Clock,
   UserCheck,
+  Edit2,
 } from "lucide-react";
 import {
   Bar,
@@ -47,7 +49,7 @@ import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/authStore";
-import { printOrdonnance, printReceipt } from "@/lib/printHelper";
+import { printOrdonnance, printReceipt, getOrdonnanceHtml, getReceiptHtml, openDocumentInTab } from "@/lib/printHelper";
 
 export const Route = createFileRoute("/doctor/")({
   component: DoctorOverview,
@@ -212,6 +214,17 @@ function DoctorOverview() {
     patientEmail?: string;
   } | null>(null);
 
+  const [consultationStep, setConsultationStep] = useState<"ordonnance" | "recette" | null>(null);
+  const [activeReceipt, setActiveReceipt] = useState<{
+    receiptNumber: string;
+    date: string;
+    doctorName: string;
+    speciality: string;
+    patientName: string;
+    patientEmail: string;
+    price: number;
+  } | null>(null);
+
   const updateDrug = (i: number, field: string, val: string | number) =>
     setDrugs((prev) => prev.map((d, idx) => (idx === i ? { ...d, [field]: val } : d)));
   const addDrug = () => setDrugs((prev) => [...prev, { ...EMPTY_DRUG }]);
@@ -334,9 +347,72 @@ function DoctorOverview() {
 
   const handleOpenPrescription = async (appt: ApiAppointment) => {
     setSelectedAppt(appt);
-    setDrugs([{ ...EMPTY_DRUG }]);
-    setGlobalNotes("");
-    setPrice(doctorProfile?.fee || 2000);
+    setConsultationStep("ordonnance");
+    if (appt.prescription && appt.prescription.drugs && appt.prescription.drugs.length > 0) {
+      setDrugs(appt.prescription.drugs.map((d: any) => ({ ...d })));
+      setGlobalNotes(appt.prescription.notes || "");
+    } else if (appt.prescription) {
+      setDrugs([{
+        drug: appt.prescription.drug || "",
+        dose: appt.prescription.dose || "",
+        freq: appt.prescription.freq || "",
+        refills: appt.prescription.refills || 0,
+        notes: appt.prescription.notes || "",
+      }]);
+      setGlobalNotes(appt.prescription.notes || "");
+    } else {
+      setDrugs([{ ...EMPTY_DRUG }]);
+      setGlobalNotes("");
+    }
+    setPrice(appt.price || doctorProfile?.fee || 2000);
+    setSelectedDependent(null);
+    setLoadingProfile(true);
+    try {
+      if (appt.dependentId) {
+        const depRes = await fetchDependentsByParent(appt.patientEmail);
+        const deps: ApiDependent[] = (depRes as any).data?.data?.dependents || [];
+        const child = deps.find((d: ApiDependent) => d._id === appt.dependentId);
+        if (child) {
+          setSelectedDependent(child);
+          setWeight(child.weight || 0);
+          setHeight(child.height || 0);
+          setAge(
+            Math.floor(
+              (Date.now() - new Date(child.dateOfBirth).getTime()) /
+                (365.25 * 24 * 60 * 60 * 1000),
+            ),
+          );
+          setAllergies(child.allergies || "");
+          setBloodType(child.bloodType || "");
+          setChronicConditions(child.chronicConditions || "");
+          return;
+        }
+      }
+      const res = await fetchPatientProfile(appt.patientEmail);
+      const p = res.data.profile;
+      setWeight(p.weight || 0);
+      setHeight(p.height || 0);
+      setAge(p.age || 0);
+      setAllergies(p.allergies || "");
+      setBloodType(p.bloodType || "");
+      setChronicConditions(p.chronicConditions || "");
+    } catch {
+      setWeight(0);
+      setHeight(0);
+      setAge(0);
+      setAllergies("");
+      setBloodType("");
+      setChronicConditions("");
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
+  const handleOpenReceiptForm = async (appt: ApiAppointment) => {
+    setSelectedAppt(appt);
+    setConsultationStep("recette");
+    setPrice(appt.price || doctorProfile?.fee || 2000);
+    setGlobalNotes(appt.notes || "");
     setSelectedDependent(null);
     setLoadingProfile(true);
     try {
@@ -398,24 +474,40 @@ function DoctorOverview() {
       dose: firstDrug.dose,
       freq: firstDrug.freq,
       refills: firstDrug.refills,
-      notes: firstDrug.notes,
+      notes: globalNotes || firstDrug.notes,
       drugs: drugs,
     };
 
-    const rxId = `rx-${Date.now()}`;
+    const rxId = selectedAppt._id;
     const patientEmail = selectedAppt.patientEmail;
-    const rn = `REC-${Date.now()}`;
 
     try {
-      await updateAppointmentStatus(selectedAppt._id, {
-        status: "Terminé",
-        prescription,
-        price,
-        receiptNumber: rn,
+      await updatePrescription(selectedAppt._id, { prescription });
+      refetchAppointments();
+
+      const ordonnanceHtml = getOrdonnanceHtml({
+        id: rxId,
+        date: selectedAppt.date,
+        doctorName: doctorName,
+        patientName: selectedAppt.patientName,
+        drug: firstDrug.drug,
+        dose: firstDrug.dose,
+        freq: firstDrug.freq,
+        refills: firstDrug.refills,
+        notes: globalNotes || prescription.notes,
+        drugs: drugs,
       });
 
-      toast.success("Consultation terminée. Ordonnance sauvegardée.");
-      refetchAppointments();
+      const base64Html = "data:text/html;base64," + btoa(unescape(encodeURIComponent(ordonnanceHtml)));
+
+      addPatientDocument(selectedAppt.patientName, {
+        name: `Ordonnance_${selectedAppt.date}_${Date.now().toString().substring(8)}.html`,
+        category: "Rx",
+        size: `${Math.round(ordonnanceHtml.length / 1024)} KB`,
+        fileDataUrl: base64Html,
+      });
+
+      toast.success("Ordonnance enregistrée avec succès et ajoutée au dossier.");
 
       setActiveRx({
         id: rxId,
@@ -426,18 +518,77 @@ function DoctorOverview() {
         dose: firstDrug.dose,
         freq: firstDrug.freq,
         refills: firstDrug.refills,
-        notes: prescription.notes,
+        notes: globalNotes || prescription.notes,
         drugs: drugs,
-        price: price,
-        receiptNumber: rn,
+        price: selectedAppt.price || price,
+        receiptNumber: selectedAppt.receiptNumber,
         patientEmail: patientEmail,
       });
 
       setSelectedAppt(null);
+      setConsultationStep(null);
       setDrugs([{ ...EMPTY_DRUG }]);
       setGlobalNotes("");
-    } catch {
+    } catch (err: any) {
+      console.error(err);
       toast.error("Erreur lors de la sauvegarde de l'ordonnance.");
+    }
+  };
+
+  const handleSubmitReceipt = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedAppt) return;
+
+    const rn = `REC-${Date.now()}`;
+    const patientEmail = selectedAppt.patientEmail;
+
+    try {
+      await updateAppointmentStatus(selectedAppt._id, {
+        status: "Terminé",
+        price,
+        receiptNumber: rn,
+        notes: globalNotes,
+      });
+
+      refetchAppointments();
+
+      const receiptHtml = getReceiptHtml({
+        receiptNumber: rn,
+        date: selectedAppt.date,
+        doctorName: doctorName,
+        speciality: doctorProfile?.speciality || "Médecin Généraliste",
+        patientName: selectedAppt.patientName,
+        patientEmail: patientEmail || "",
+        price: price,
+      });
+
+      const base64Html = "data:text/html;base64," + btoa(unescape(encodeURIComponent(receiptHtml)));
+
+      addPatientDocument(selectedAppt.patientName, {
+        name: `Reçu_${selectedAppt.date}_${Date.now().toString().substring(8)}.html`,
+        category: "Reçu",
+        size: `${Math.round(receiptHtml.length / 1024)} KB`,
+        fileDataUrl: base64Html,
+      });
+
+      toast.success("Consultation finalisée. Reçu de paiement enregistré.");
+
+      setActiveReceipt({
+        receiptNumber: rn,
+        date: selectedAppt.date,
+        doctorName: doctorName,
+        speciality: doctorProfile?.speciality || "Médecin Généraliste",
+        patientName: selectedAppt.patientName,
+        patientEmail: patientEmail || "",
+        price: price,
+      });
+
+      setSelectedAppt(null);
+      setConsultationStep(null);
+      setGlobalNotes("");
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Erreur lors de la finalisation du reçu.");
     }
   };
 
@@ -532,7 +683,7 @@ function DoctorOverview() {
                   "flex flex-col gap-4 rounded-xl border p-4 transition shadow-sm sm:flex-row sm:items-center",
                   appt.status === "En consultation"
                     ? "bg-teal/5 border-teal/40 ring-1 ring-teal/30"
-                    : appt.status === "En attente"
+                    : appt.status === "En attente" || (appt.status === "Confirmé" && appt.arrivedAt)
                       ? "bg-amber-500/5 border-amber-500/30"
                       : appt.status === "Terminé"
                         ? "bg-slate-50/50 border-border opacity-70"
@@ -576,8 +727,10 @@ function DoctorOverview() {
                   <span
                     className={cn(
                       "rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide border",
-                      appt.status === "Confirmé" &&
+                      appt.status === "Confirmé" && !appt.arrivedAt &&
                         "bg-slate-100 text-slate-700 border-slate-200",
+                      appt.status === "Confirmé" && appt.arrivedAt &&
+                        "bg-amber-500/10 text-amber-700 border-amber-500/20 animate-pulse",
                       appt.status === "En attente" &&
                         "bg-amber-500/10 text-amber-700 border-amber-500/20 animate-pulse",
                       appt.status === "En consultation" &&
@@ -586,13 +739,17 @@ function DoctorOverview() {
                         "bg-green-100 text-green-700 border-green-200",
                     )}
                   >
-                    {appt.status === "Confirmé" ? "Non arrivé" : appt.status}
+                    {appt.status === "Confirmé" && !appt.arrivedAt
+                      ? "Non arrivé"
+                      : appt.status === "Confirmé" && appt.arrivedAt
+                        ? "En salle d'attente"
+                        : appt.status}
                   </span>
                 </div>
 
                 {/* Actions */}
                 <div className="flex flex-wrap gap-2 sm:justify-end">
-                  {appt.status === "Confirmé" && (
+                  {appt.status === "Confirmé" && !appt.arrivedAt && (
                     <button
                       onClick={() => handleArrival(appt._id)}
                       className="cursor-pointer rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-600 transition"
@@ -600,7 +757,7 @@ function DoctorOverview() {
                       Valider arrivée
                     </button>
                   )}
-                  {appt.status === "En attente" && (
+                  {(appt.status === "En attente" || (appt.status === "Confirmé" && appt.arrivedAt)) && (
                     <button
                       onClick={() => handleStartConsultation(appt._id)}
                       className="cursor-pointer rounded-lg bg-teal px-3 py-1.5 text-xs font-bold text-white hover:opacity-90 transition"
@@ -609,12 +766,20 @@ function DoctorOverview() {
                     </button>
                   )}
                   {appt.status === "En consultation" && (
-                    <button
-                      onClick={() => handleOpenPrescription(appt)}
-                      className="cursor-pointer rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white hover:opacity-90 transition"
-                    >
-                      Terminer &amp; rédiger ordonnance
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleOpenPrescription(appt)}
+                        className="cursor-pointer rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white hover:opacity-90 transition"
+                      >
+                        Rédiger Ordonnance
+                      </button>
+                      <button
+                        onClick={() => handleOpenReceiptForm(appt)}
+                        className="cursor-pointer rounded-lg bg-[#0284c7] px-3 py-1.5 text-xs font-bold text-white hover:opacity-90 transition"
+                      >
+                        Facturer &amp; Terminer
+                      </button>
+                    </div>
                   )}
                   {appt.status === "Terminé" && appt.prescription?.drug && (
                     <button
@@ -753,7 +918,7 @@ function DoctorOverview() {
 
       {/* ---- Prescription Form Modal ---- */}
       <AnimatePresence>
-        {selectedAppt && (
+        {selectedAppt && consultationStep === "ordonnance" && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -764,7 +929,7 @@ function DoctorOverview() {
               <div className="flex items-center justify-between border-b border-border pb-4 mb-5">
                 <div>
                   <h3 className="text-base font-extrabold text-ink">
-                    Consultation — {selectedAppt.patientName}
+                    Rédiger l'Ordonnance — {selectedAppt.patientName}
                   </h3>
                   {selectedDependent && (
                     <p className="text-xs text-amber-600 font-semibold mt-0.5">
@@ -774,7 +939,10 @@ function DoctorOverview() {
                   )}
                 </div>
                 <button
-                  onClick={() => setSelectedAppt(null)}
+                  onClick={() => {
+                    setSelectedAppt(null);
+                    setConsultationStep(null);
+                  }}
                   className="rounded-lg p-1 text-ink-soft hover:bg-slate-100 transition cursor-pointer"
                 >
                   <X className="h-5 w-5" />
@@ -784,8 +952,7 @@ function DoctorOverview() {
               {/* Patient vitals */}
               {loadingProfile ? (
                 <div className="flex items-center justify-center py-4 text-slate-400 text-xs gap-2">
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Chargement
-                  du profil...
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Chargement du profil...
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-3 mb-5">
@@ -935,37 +1102,26 @@ function DoctorOverview() {
                   </div>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
-                      Frais de consultation (DA)
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      value={price}
-                      onChange={(e) => setPrice(Number(e.target.value))}
-                      className="w-full rounded-xl border border-border bg-slate-50/50 p-3 text-sm font-bold text-ink focus:border-teal focus:outline-none shadow-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
-                      Notes globales
-                    </label>
-                    <textarea
-                      value={globalNotes}
-                      onChange={(e) => setGlobalNotes(e.target.value)}
-                      rows={2}
-                      placeholder="Instructions supplémentaires..."
-                      className="w-full rounded-xl border border-border bg-slate-50/50 p-3 text-xs focus:border-teal focus:outline-none shadow-sm resize-none"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                    Notes globales (Ordonnance)
+                  </label>
+                  <textarea
+                    value={globalNotes}
+                    onChange={(e) => setGlobalNotes(e.target.value)}
+                    rows={2}
+                    placeholder="Instructions supplémentaires figurant sur l'ordonnance..."
+                    className="w-full rounded-xl border border-border bg-slate-50/50 p-3 text-xs focus:border-teal focus:outline-none shadow-sm resize-none"
+                  />
                 </div>
 
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     type="button"
-                    onClick={() => setSelectedAppt(null)}
+                    onClick={() => {
+                      setSelectedAppt(null);
+                      setConsultationStep(null);
+                    }}
                     className="cursor-pointer rounded-xl border border-border px-4 py-2.5 text-xs font-bold text-ink-soft hover:bg-slate-100 transition"
                   >
                     Annuler
@@ -974,7 +1130,88 @@ function DoctorOverview() {
                     type="submit"
                     className="cursor-pointer rounded-xl bg-teal px-5 py-2.5 text-xs font-bold text-white hover:opacity-90 transition shadow-sm"
                   >
-                    Terminer &amp; enregistrer
+                    Enregistrer l'Ordonnance
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {selectedAppt && consultationStep === "recette" && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="w-full max-w-xl rounded-2xl border border-border bg-white p-6 shadow-elevated my-8"
+            >
+              <div className="flex items-center justify-between border-b border-border pb-4 mb-5">
+                <div>
+                  <h3 className="text-base font-extrabold text-ink">
+                    Émission du Reçu — {selectedAppt.patientName}
+                  </h3>
+                  {selectedDependent && (
+                    <p className="text-xs text-amber-600 font-semibold mt-0.5">
+                      Mineur : {selectedDependent.firstName}{" "}
+                      {selectedDependent.lastName}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedAppt(null);
+                    setConsultationStep(null);
+                  }}
+                  className="rounded-lg p-1 text-ink-soft hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmitReceipt} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                    Frais de consultation (DA) *
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    required
+                    value={price}
+                    onChange={(e) => setPrice(Number(e.target.value))}
+                    className="w-full rounded-xl border border-border bg-slate-50/50 p-3 text-sm font-bold text-ink focus:border-teal focus:outline-none shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">
+                    Notes / Observations (Reçu)
+                  </label>
+                  <textarea
+                    value={globalNotes}
+                    onChange={(e) => setGlobalNotes(e.target.value)}
+                    rows={2}
+                    placeholder="Détails de facturation ou notes d'honoraires..."
+                    className="w-full rounded-xl border border-border bg-slate-50/50 p-3 text-xs focus:border-teal focus:outline-none shadow-sm resize-none"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedAppt(null);
+                      setConsultationStep(null);
+                    }}
+                    className="cursor-pointer rounded-xl border border-border px-4 py-2.5 text-xs font-bold text-ink-soft hover:bg-slate-100 transition"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="cursor-pointer rounded-xl bg-teal px-5 py-2.5 text-xs font-bold text-white hover:opacity-90 transition shadow-sm"
+                  >
+                    Finaliser &amp; Enregistrer le Reçu
                   </button>
                 </div>
               </form>
@@ -995,9 +1232,23 @@ function DoctorOverview() {
             >
               <div className="flex items-center justify-between border-b border-border pb-4">
                 <h3 className="text-lg font-bold text-ink">
-                  Aperçu avant impression
+                  Aperçu de l'Ordonnance
                 </h3>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const appt = appointmentsList.find((a) => a._id === activeRx.id);
+                      if (appt) {
+                        setActiveRx(null);
+                        handleOpenPrescription(appt);
+                      } else {
+                        toast.error("Rendez-vous non trouvé.");
+                      }
+                    }}
+                    className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white hover:opacity-90 transition"
+                  >
+                    <Edit2 className="h-4 w-4" /> Modifier
+                  </button>
                   <button
                     onClick={() =>
                       printOrdonnance({
@@ -1016,28 +1267,29 @@ function DoctorOverview() {
                     }
                     className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl bg-teal px-4 py-2 text-xs font-bold text-white hover:opacity-90 transition"
                   >
-                    <Printer className="h-4 w-4" /> Imprimer ordonnance
+                    <Printer className="h-4 w-4" /> Imprimer
                   </button>
-                  {activeRx.price !== undefined && activeRx.price > 0 && (
-                    <button
-                      onClick={() =>
-                        printReceipt({
-                          receiptNumber:
-                            activeRx.receiptNumber || `REC-${Date.now()}`,
-                          date: activeRx.date,
-                          doctorName: activeRx.doctorName,
-                          speciality:
-                            doctorProfile?.speciality || "Médecin Généraliste",
-                          patientName: activeRx.patientName,
-                          patientEmail: activeRx.patientEmail || "",
-                          price: activeRx.price!,
-                        })
-                      }
-                      className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white hover:opacity-90 transition"
-                    >
-                      <Printer className="h-4 w-4" /> Imprimer reçu
-                    </button>
-                  )}
+                  <button
+                    onClick={() => {
+                      const html = getOrdonnanceHtml({
+                        id: activeRx.id,
+                        date: activeRx.date,
+                        doctorName: activeRx.doctorName,
+                        patientName: activeRx.patientName,
+                        drug: activeRx.drugs?.[0]?.drug || activeRx.drug,
+                        dose: activeRx.drugs?.[0]?.dose || activeRx.dose,
+                        freq: activeRx.drugs?.[0]?.freq || activeRx.freq,
+                        refills:
+                          activeRx.drugs?.[0]?.refills ?? activeRx.refills,
+                        notes: activeRx.notes,
+                        drugs: activeRx.drugs as any,
+                      });
+                      openDocumentInTab(html);
+                    }}
+                    className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl bg-slate-600 px-4 py-2 text-xs font-bold text-white hover:opacity-90 transition"
+                  >
+                    <Eye className="h-4 w-4" /> Ouvrir
+                  </button>
                   <button
                     onClick={() => setActiveRx(null)}
                     className="rounded-lg p-1 text-ink-soft hover:bg-slate-100 transition cursor-pointer"
@@ -1147,15 +1399,6 @@ function DoctorOverview() {
                   </div>
                 )}
 
-                {activeRx.price !== undefined && activeRx.price > 0 && (
-                  <div className="mt-4 border-t border-dashed border-slate-300 pt-4 text-xs text-slate-800 font-bold">
-                    <span>Frais de consultation : </span>
-                    <span className="text-teal font-extrabold">
-                      {activeRx.price.toLocaleString()} DA
-                    </span>
-                  </div>
-                )}
-
                 <div className="mt-10 pt-6 border-t border-slate-200 flex justify-between items-end text-[10px] text-slate-500">
                   <div>
                     <p>
@@ -1173,6 +1416,139 @@ function DoctorOverview() {
                     </div>
                   </div>
                 </div>
+              </div>
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setActiveRx(null)}
+                  className="cursor-pointer rounded-xl bg-[#06122e] px-6 py-2.5 text-xs font-bold text-white hover:opacity-90 transition shadow-sm"
+                >
+                  Fermer
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ---- Reçu Print Preview Modal ---- */}
+      <AnimatePresence>
+        {activeReceipt && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="w-full max-w-2xl rounded-2xl border border-border bg-white p-6 shadow-elevated my-8"
+            >
+              <div className="flex items-center justify-between border-b border-border pb-4">
+                <h3 className="text-lg font-bold text-ink">
+                  Aperçu du Reçu de Paiement
+                </h3>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() =>
+                      printReceipt({
+                        receiptNumber: activeReceipt.receiptNumber,
+                        date: activeReceipt.date,
+                        doctorName: activeReceipt.doctorName,
+                        speciality: activeReceipt.speciality,
+                        patientName: activeReceipt.patientName,
+                        patientEmail: activeReceipt.patientEmail,
+                        price: activeReceipt.price,
+                      })
+                    }
+                    className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl bg-teal px-4 py-2 text-xs font-bold text-white hover:opacity-90 transition"
+                  >
+                    <Printer className="h-4 w-4" /> Imprimer
+                  </button>
+                  <button
+                    onClick={() => {
+                      const html = getReceiptHtml({
+                        receiptNumber: activeReceipt.receiptNumber,
+                        date: activeReceipt.date,
+                        doctorName: activeReceipt.doctorName,
+                        speciality: activeReceipt.speciality,
+                        patientName: activeReceipt.patientName,
+                        patientEmail: activeReceipt.patientEmail,
+                        price: activeReceipt.price,
+                      });
+                      openDocumentInTab(html);
+                    }}
+                    className="cursor-pointer inline-flex items-center gap-1.5 rounded-xl bg-slate-600 px-4 py-2 text-xs font-bold text-white hover:opacity-90 transition"
+                  >
+                    <Eye className="h-4 w-4" /> Ouvrir
+                  </button>
+                  <button
+                    onClick={() => setActiveReceipt(null)}
+                    className="rounded-lg p-1 text-ink-soft hover:bg-slate-100 transition cursor-pointer"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Receipt Content Layout */}
+              <div
+                id={`receipt-sheet-${activeReceipt.receiptNumber}`}
+                className="p-8 border border-slate-300 rounded-xl bg-white mt-4 font-sans text-slate-800 leading-relaxed"
+              >
+                <div className="flex justify-between items-start border-b pb-6 border-slate-200">
+                  <div>
+                    <h4 className="text-xl font-bold text-[#06122e]">Unicare</h4>
+                    <p className="text-xs text-slate-500 mt-1">Centre Médical de Béjaïa</p>
+                    <p className="text-xs text-slate-500">Espace Médical Gouraya, Béjaïa</p>
+                    <p className="text-xs text-slate-500">Tél: +213 (0)34 12 34 56</p>
+                  </div>
+                  <div className="text-right">
+                    <h5 className="text-xs uppercase tracking-wider text-slate-400 font-bold">Reçu de Consultation</h5>
+                    <p className="text-sm font-bold text-teal mt-1">Réf: {activeReceipt.receiptNumber}</p>
+                    <p className="text-xs text-slate-500 mt-1">Date: {activeReceipt.date}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-6 my-6 text-xs bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <div>
+                    <strong className="text-slate-400 block uppercase mb-1">Patient</strong>
+                    <p className="font-bold text-slate-800 text-sm">{activeReceipt.patientName}</p>
+                    <p className="text-slate-600 mt-0.5">{activeReceipt.patientEmail}</p>
+                  </div>
+                  <div>
+                    <strong className="text-slate-400 block uppercase mb-1">Praticien</strong>
+                    <p className="font-bold text-slate-800 text-sm">{activeReceipt.doctorName}</p>
+                    <p className="text-slate-600 mt-0.5">{activeReceipt.speciality}</p>
+                  </div>
+                </div>
+
+                <table className="w-full text-xs text-left my-6 border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-400 uppercase tracking-wider font-bold">
+                      <th className="py-2">Description</th>
+                      <th className="py-2 text-right">Montant</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-slate-100 text-slate-800 font-medium">
+                      <td className="py-3">Consultation médicale de suivi</td>
+                      <td className="py-3 text-right">{activeReceipt.price.toLocaleString()} DA</td>
+                    </tr>
+                    <tr className="text-slate-900 font-bold text-sm bg-teal-50 border-t border-slate-200">
+                      <td className="py-3 px-2">Total réglé</td>
+                      <td className="py-3 px-2 text-right text-teal">{activeReceipt.price.toLocaleString()} DA</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div className="mt-6 p-4 rounded-xl bg-slate-100 border border-slate-200 text-[11px] text-slate-500 italic">
+                  Ce reçu confirme le paiement effectif des honoraires du médecin au guichet de la clinique UniCare.
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setActiveReceipt(null)}
+                  className="cursor-pointer rounded-xl bg-[#06122e] px-6 py-2.5 text-xs font-bold text-white hover:opacity-90 transition shadow-sm"
+                >
+                  Fermer
+                </button>
               </div>
             </motion.div>
           </div>
@@ -1549,13 +1925,24 @@ function DoctorOverview() {
                   alt={selectedPreviewDoc.name}
                   className="max-h-[50vh] w-auto object-contain rounded shadow"
                 />
-              ) : selectedPreviewDoc.fileDataUrl?.startsWith(
-                  "data:application/pdf",
-                ) ? (
+              ) : selectedPreviewDoc.fileDataUrl?.startsWith("data:text/html") ? (
+                <iframe
+                  srcDoc={(() => {
+                    try {
+                      const base64Content = selectedPreviewDoc.fileDataUrl.split(",")[1];
+                      return decodeURIComponent(escape(atob(base64Content)));
+                    } catch (e) {
+                      return "";
+                    }
+                  })()}
+                  title={selectedPreviewDoc.name}
+                  className="min-h-[55vh] w-full rounded border-0 bg-white"
+                />
+              ) : selectedPreviewDoc.fileDataUrl?.startsWith("data:application/pdf") ? (
                 <iframe
                   src={selectedPreviewDoc.fileDataUrl}
                   title={selectedPreviewDoc.name}
-                  className="min-h-[55vh] w-full rounded border-0"
+                  className="min-h-[55vh] w-full rounded border-0 bg-white"
                 />
               ) : (
                 <div className="text-center p-8">

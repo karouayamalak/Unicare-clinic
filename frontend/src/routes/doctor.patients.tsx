@@ -1039,6 +1039,19 @@ function DoctorPatients() {
                   alt={selectedPreviewDoc.name}
                   className="max-h-[50vh] w-auto object-contain rounded shadow"
                 />
+              ) : selectedPreviewDoc.fileDataUrl?.startsWith("data:text/html") ? (
+                <iframe
+                  srcDoc={(() => {
+                    try {
+                      const base64Content = selectedPreviewDoc.fileDataUrl.split(",")[1];
+                      return decodeURIComponent(escape(atob(base64Content)));
+                    } catch (e) {
+                      return "";
+                    }
+                  })()}
+                  title={selectedPreviewDoc.name}
+                  className="min-h-[60vh] w-full rounded border-0 bg-white"
+                />
               ) : selectedPreviewDoc.fileDataUrl?.startsWith("data:application/pdf") ? (
                 <iframe
                   src={selectedPreviewDoc.fileDataUrl}

@@ -5,7 +5,7 @@ import { CalendarPlus, Clock, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { printOrdonnance, printReceipt } from "@/lib/printHelper";
+import { printOrdonnance, printReceipt, getOrdonnanceHtml, getReceiptHtml, openDocumentInTab } from "@/lib/printHelper";
 
 export const Route = createFileRoute("/patient/appointments")({
   component: PatientAppointments,
@@ -39,10 +39,13 @@ function PatientAppointments() {
     load();
   }, []);
 
-  const handleMarkArrived = async (id: string) => {
+  const handleMarkArrived = async (appt: ApiAppointment) => {
     try {
-      await updateAppointmentStatus(id, {
-        status: "En attente", // Confirmé → En attente OR En attente → En attente (self-transition)
+      // Keep the existing status — only set arrivedAt so the doctor's
+      // waiting-room filter (which checks `arrivedAt`) picks it up without
+      // losing the "Confirmé" state that the doctor already set.
+      await updateAppointmentStatus(appt._id, {
+        status: appt.status as any,
         arrivedAt: new Date().toLocaleTimeString("fr-DZ", { hour: "2-digit", minute: "2-digit" }),
       });
       toast.success(
@@ -146,7 +149,7 @@ function PatientAppointments() {
                     </span>
                     {(a.status === "Confirmé" || (a.status === "En attente" && !a.arrivedAt)) ? (
                       <button
-                        onClick={() => handleMarkArrived(a._id)}
+                        onClick={() => handleMarkArrived(a)}
                         className="cursor-pointer inline-flex items-center gap-1 rounded bg-[#0284c7] px-3.5 py-2 text-xs font-bold text-white shadow hover:opacity-90 transition"
                       >
                         Je suis arrivé
@@ -218,45 +221,88 @@ function PatientAppointments() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-3 text-xs font-bold">
+                          <div className="flex justify-end gap-3 text-xs font-bold items-center">
                             {a.status === "Terminé" && a.prescription && (
-                              <button
-                                onClick={() =>
-                                  printOrdonnance({
-                                    id: a._id,
-                                    date: a.date,
-                                    doctorName: a.doctorName,
-                                    patientName: a.patientName,
-                                    drug: a.prescription!.drug,
-                                    dose: a.prescription!.dose,
-                                    freq: a.prescription!.freq,
-                                    refills: a.prescription!.refills,
-                                    notes: a.prescription!.notes,
-                                    drugs: a.prescription!.drugs,
-                                  })
-                                }
-                                className="text-teal hover:underline cursor-pointer"
-                              >
-                                Ordonnance
-                              </button>
+                              <div className="flex gap-1 items-center">
+                                <button
+                                  onClick={() =>
+                                    printOrdonnance({
+                                      id: a._id,
+                                      date: a.date,
+                                      doctorName: a.doctorName,
+                                      patientName: a.patientName,
+                                      drug: a.prescription!.drug,
+                                      dose: a.prescription!.dose,
+                                      freq: a.prescription!.freq,
+                                      refills: a.prescription!.refills,
+                                      notes: a.prescription!.notes,
+                                      drugs: a.prescription!.drugs,
+                                    })
+                                  }
+                                  className="text-teal hover:underline cursor-pointer"
+                                >
+                                  Ordonnance
+                                </button>
+                                <span className="text-slate-300 text-[10px]">|</span>
+                                <button
+                                  onClick={() => {
+                                    const html = getOrdonnanceHtml({
+                                      id: a._id,
+                                      date: a.date,
+                                      doctorName: a.doctorName,
+                                      patientName: a.patientName,
+                                      drug: a.prescription!.drug,
+                                      dose: a.prescription!.dose,
+                                      freq: a.prescription!.freq,
+                                      refills: a.prescription!.refills,
+                                      notes: a.prescription!.notes,
+                                      drugs: a.prescription!.drugs,
+                                    });
+                                    openDocumentInTab(html);
+                                  }}
+                                  className="text-slate-500 hover:text-slate-800 cursor-pointer"
+                                >
+                                  Ouvrir
+                                </button>
+                              </div>
                             )}
                             {a.status === "Terminé" && a.price !== undefined && a.price > 0 && (
-                              <button
-                                onClick={() =>
-                                  printReceipt({
-                                    receiptNumber: a.receiptNumber || `REC-${a._id.substring(18)}`,
-                                    date: a.date,
-                                    doctorName: a.doctorName,
-                                    speciality: a.speciality,
-                                    patientName: a.patientName,
-                                    patientEmail: a.patientEmail,
-                                    price: a.price!,
-                                  })
-                                }
-                                className="text-amber-600 hover:underline cursor-pointer"
-                              >
-                                Reçu
-                              </button>
+                              <div className="flex gap-1 items-center">
+                                <button
+                                  onClick={() =>
+                                    printReceipt({
+                                      receiptNumber: a.receiptNumber || `REC-${a._id.substring(18)}`,
+                                      date: a.date,
+                                      doctorName: a.doctorName,
+                                      speciality: a.speciality,
+                                      patientName: a.patientName,
+                                      patientEmail: a.patientEmail,
+                                      price: a.price!,
+                                    })
+                                  }
+                                  className="text-amber-600 hover:underline cursor-pointer"
+                                >
+                                  Reçu
+                                </button>
+                                <span className="text-slate-300 text-[10px]">|</span>
+                                <button
+                                  onClick={() => {
+                                    const html = getReceiptHtml({
+                                      receiptNumber: a.receiptNumber || `REC-${a._id.substring(18)}`,
+                                      date: a.date,
+                                      doctorName: a.doctorName,
+                                      speciality: a.speciality,
+                                      patientName: a.patientName,
+                                      patientEmail: a.patientEmail,
+                                      price: a.price!,
+                                    });
+                                    openDocumentInTab(html);
+                                  }}
+                                  className="text-slate-500 hover:text-slate-800 cursor-pointer"
+                                >
+                                  Ouvrir
+                                </button>
+                              </div>
                             )}
                             {a.status === "Annulé" && (
                               <span className="text-slate-400 font-medium">—</span>
