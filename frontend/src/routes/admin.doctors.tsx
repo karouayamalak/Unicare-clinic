@@ -32,6 +32,34 @@ function isPasswordStrong(pwd: string) {
   return r.minLength && r.hasUpper && r.hasLower && r.hasDigit && r.hasSpecial;
 }
 
+function getCombinedSpecialities() {
+  const defaults = [...specialities];
+  try {
+    const raw = localStorage.getItem("unicare_custom_specialities");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        parsed.forEach(item => {
+          if (item && item.slug && item.name && !defaults.some(d => d.slug === item.slug)) {
+            defaults.push({
+              slug: item.slug,
+              name: item.name,
+              tagline: "Spécialité personnalisée",
+              description: "Ajoutée par l'administration",
+              icon: Stethoscope as any,
+              doctors: 0,
+              color: "bg-slate-50",
+            });
+          }
+        });
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  return defaults;
+}
+
 function AdminDoctors() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -79,8 +107,9 @@ function AdminDoctors() {
     if (!editingDoctor) return;
     setSubmitting(true);
     try {
+      const combined = getCombinedSpecialities();
       const selectedSpec =
-        specialities.find((s) => s.slug === editSpecialitySlug) || specialities[0];
+        combined.find((s) => s.slug === editSpecialitySlug) || combined[0];
       // Admin can only update administrative fields (not personal info)
       await updateDoctorProfile(editingDoctor._id, {
         speciality: selectedSpec.name,
@@ -152,7 +181,8 @@ function AdminDoctors() {
     }
     setSubmitting(true);
     try {
-      const selectedSpec = specialities.find((s) => s.slug === specialitySlug) || specialities[0];
+      const combined = getCombinedSpecialities();
+      const selectedSpec = combined.find((s) => s.slug === specialitySlug) || combined[0];
       await createDoctorProfile({
         firstName,
         lastName,
@@ -485,7 +515,7 @@ function AdminDoctors() {
                   onChange={(e) => setSpecialitySlug(e.target.value)}
                   className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-[#06122e] focus:outline-none bg-white"
                 >
-                  {specialities.map((s) => (
+                  {getCombinedSpecialities().map((s) => (
                     <option key={s.slug} value={s.slug}>
                       {s.name}
                     </option>
@@ -654,7 +684,7 @@ function AdminDoctors() {
                     onChange={(e) => setEditSpecialitySlug(e.target.value)}
                     className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-[#06122e] focus:outline-none select-none"
                   >
-                    {specialities.map((s) => (
+                    {getCombinedSpecialities().map((s) => (
                       <option key={s.slug} value={s.slug}>
                         {s.name}
                       </option>

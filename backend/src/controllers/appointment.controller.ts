@@ -4,12 +4,7 @@ import { Doctor } from "../models/doctor.model";
 import { User } from "../models/user.model";
 import { AppError } from "../middleware/error";
 import { Dependent } from "../models/dependent.model";
-import {
-  sendAppointmentConfirmationEmail,
-  sendDoctorAppointmentNotification,
-  sendAppointmentCancellationEmail,
-  sendAppointmentCompletionEmail,
-} from "../utils/email";
+import { sendAppointmentConfirmationEmail } from "../utils/email";
 import { validateAppointmentBooking } from "../utils/appointmentRules";
 import { serializeAppointmentForClient } from "../utils/appointmentView";
 import { logAction } from "../utils/log";
@@ -235,16 +230,7 @@ export const createAppointment = async (
       location: doctor.location,
     }).catch(console.error);
 
-    if (doctor.email) {
-      sendDoctorAppointmentNotification(doctor.email, {
-        patientName: targetPatientName,
-        doctorName: doctor.name,
-        date,
-        time,
-        reason,
-        action: "créé",
-      }).catch(console.error);
-    }
+
 
     res.status(201).json({
       status: "success",
@@ -320,18 +306,6 @@ export const updateStatus = async (
       `Ancien statut: ${currentStatus} • Nouveau statut: ${status}`,
     );
 
-    if (appointment.patientEmail && status === "Terminé") {
-      sendAppointmentCompletionEmail(appointment.patientEmail, {
-        patientName: appointment.patientName,
-        doctorName: appointment.doctorName,
-        date: appointment.date,
-        time: appointment.time,
-        prescription: appointment.prescription,
-        price: appointment.price ?? 0,
-        receiptNumber: appointment.receiptNumber,
-      }).catch(console.error);
-    }
-
     // Notify patient when doctor confirms their pending appointment
     if (appointment.patientEmail && status === "Confirmé" && currentStatus === "En attente") {
       sendAppointmentConfirmationEmail(appointment.patientEmail, {
@@ -340,17 +314,6 @@ export const updateStatus = async (
         date: appointment.date,
         time: appointment.time,
         location: "UniCare Béjaïa",
-      }).catch(console.error);
-    }
-
-    // Notify patient when their appointment is cancelled by doctor/admin
-    if (appointment.patientEmail && status === "Annulé" && user.role !== "Patient") {
-      sendAppointmentCancellationEmail(appointment.patientEmail, {
-        patientName: appointment.patientName,
-        doctorName: appointment.doctorName,
-        date: appointment.date,
-        time: appointment.time,
-        cancelledBy: `le médecin (${appointment.doctorName})`,
       }).catch(console.error);
     }
 
@@ -383,15 +346,7 @@ export const deleteAppointment = async (
 
     const cancelledBy = user.role === "Admin" ? "l'administration" : `le patient (${appointment.patientName})`;
 
-    if (appointment.patientEmail) {
-      sendAppointmentCancellationEmail(appointment.patientEmail, {
-        patientName: appointment.patientName,
-        doctorName: appointment.doctorName,
-        date: appointment.date,
-        time: appointment.time,
-        cancelledBy,
-      }).catch(console.error);
-    }
+
 
     await logAction(
       user,

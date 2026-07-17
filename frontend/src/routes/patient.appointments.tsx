@@ -147,7 +147,7 @@ function PatientAppointments() {
                     >
                       {a.status === "En attente" && !a.arrivedAt ? "En attente de confirmation" : a.status}
                     </span>
-                    {(a.status === "Confirmé" || (a.status === "En attente" && !a.arrivedAt)) ? (
+                    {a.status === "Confirmé" && !a.arrivedAt ? (
                       <button
                         onClick={() => handleMarkArrived(a)}
                         className="cursor-pointer inline-flex items-center gap-1 rounded bg-[#0284c7] px-3.5 py-2 text-xs font-bold text-white shadow hover:opacity-90 transition"
@@ -163,7 +163,7 @@ function PatientAppointments() {
                         Présentiel
                       </span>
                     )}
-                    {(a.status === "Confirmé" || (a.status === "En attente" && !a.arrivedAt)) && (
+                    {!a.arrivedAt && (a.status === "Confirmé" || a.status === "En attente") && (
                       <button
                         onClick={() => handleCancel(a._id)}
                         className="cursor-pointer text-xs text-red-400 hover:text-red-600 font-semibold px-2 py-1"
