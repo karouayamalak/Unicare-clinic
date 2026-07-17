@@ -1,10 +1,10 @@
+import nodemailer from "nodemailer";
 import { env } from "../config";
 
-// ─── Email via Resend HTTP API ────────────────────────────────────────────────
-// Uses the Resend REST API directly — no SMTP port issues, works on Vercel.
-// Free tier: 3,000 emails/month. Set RESEND_API_KEY in Vercel env vars.
-// Without a verified domain, FROM must be "onboarding@resend.dev" and
-// emails can only be delivered to the account owner's email address.
+// ─── Email via Nodemailer + Gmail App Password ────────────────────────────────
+// Set GMAIL_USER and GMAIL_APP_PASSWORD in your .env file.
+// Generate an App Password at: https://myaccount.google.com/apppasswords
+// (requires 2-Step Verification to be enabled on the Gmail account)
 
 interface SendMailOptions {
   to: string;
@@ -17,57 +17,48 @@ interface SendMailOptions {
   }>;
 }
 
-export async function sendMail({ to, subject, html, attachments }: SendMailOptions) {
-  const apiKey = env.RESEND_API_KEY;
+function createTransport() {
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true, // SSL
+    auth: {
+      user: env.GMAIL_USER,
+      pass: env.GMAIL_APP_PASSWORD,
+    },
+  });
+}
 
-  if (!apiKey) {
+export async function sendMail({ to, subject, html, attachments }: SendMailOptions) {
+  if (!env.GMAIL_USER || !env.GMAIL_APP_PASSWORD) {
     // Dev mode fallback — print to console
     console.log(`\n[DEV MOCK EMAIL]\nTo: ${to}\nSubject: ${subject}\n`);
     return;
   }
 
   try {
-    const from = env.FROM_EMAIL || "onboarding@resend.dev";
+    const transporter = createTransport();
 
-    // Format attachments for Resend HTTP API (base64 string content)
-    const formattedAttachments = attachments?.map((att) => {
-      const contentBase64 =
-        Buffer.isBuffer(att.content)
-          ? att.content.toString("base64")
-          : Buffer.from(att.content).toString("base64");
-      return {
-        filename: att.filename,
-        content: contentBase64,
-        content_type: att.contentType,
-      };
+    const formattedAttachments = attachments?.map((att) => ({
+      filename: att.filename,
+      content: att.content,
+      contentType: att.contentType,
+    }));
+
+    const info = await transporter.sendMail({
+      from: `UniCare <${env.GMAIL_USER}>`,
+      to,
+      subject,
+      html,
+      ...(formattedAttachments && { attachments: formattedAttachments }),
     });
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: `UniCare <${from}>`,
-        to,
-        subject,
-        html,
-        ...(formattedAttachments && { attachments: formattedAttachments }),
-      }),
-    });
-
-    const data = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      console.error(` Resend API error [${res.status}]: ${JSON.stringify(data)}`);
-    } else {
-      console.log(` Email sent to ${to} — ID: ${(data as any).id}`);
-    }
+    console.log(` Email sent to ${to} — MessageId: ${info.messageId}`);
   } catch (err: any) {
     console.error(` Email send failed: ${err.message}`);
   }
 }
+
 
 
 // ─── Verification & Password Resets ──────────────────────────────────────────

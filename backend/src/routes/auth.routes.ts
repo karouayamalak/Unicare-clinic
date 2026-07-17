@@ -4,6 +4,7 @@ import {
   register,
   login,
   verifyEmail,
+  resendVerification,
   googleLogin,
   refresh,
   logout,
@@ -52,6 +53,7 @@ router.post("/register", validateRequest({ body: registerSchema }), register);
 router.post("/login", validateRequest({ body: loginSchema }), login);
 router.post("/google", validateRequest({ body: googleSchema }), googleLogin);
 router.post("/verify-email", verifyEmail);
+router.post("/resend-verification", resendVerification);
 router.post("/refresh", refresh);
 router.post("/logout", logout);
 

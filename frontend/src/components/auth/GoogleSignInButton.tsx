@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { googleLoginUser, ApiError, type AuthUser } from "@/lib/api";
 import { authStore } from "@/lib/authStore";
 import { toast } from "sonner";
@@ -106,6 +107,7 @@ export function GoogleSignInButton({
   successMessage?: string;
   label?: string;
 }) {
+  const nav = useNavigate();
   const hiddenRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
   const onSuccessRef = useRef(onSuccess);
@@ -127,7 +129,16 @@ export function GoogleSignInButton({
     async (credential: string) => {
       try {
         setLoading(true);
-        const res = await googleLoginUser({ idToken: credential });
+        const res = await googleLoginUser({ idToken: credential }) as any;
+        
+        if (res.status === "verification_required") {
+          toast.success("Compte créé !", {
+            description: `Un code de vérification a été envoyé à ${res.email}`,
+          });
+          nav({ to: "/verify-email", search: { email: res.email } });
+          return;
+        }
+
         authStore.login(res.data.user);
         toast.success(`Bienvenue, ${res.data.user.firstName} !`, { description: successMessage });
         onSuccessRef.current(res.data.user);
@@ -144,7 +155,7 @@ export function GoogleSignInButton({
         setLoading(false);
       }
     },
-    [setLoading, successMessage],
+    [setLoading, successMessage, nav],
   );
 
   useEffect(() => {

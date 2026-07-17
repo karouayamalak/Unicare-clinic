@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AuthButton, AuthField, AuthLayout } from "../components/layouts/AuthLayout";
-import { verifyEmail, ApiError } from "../lib/api";
+import { verifyEmail, resendVerificationEmail, ApiError } from "../lib/api";
 import { z } from "zod";
 
 export const Route = createFileRoute("/verify-email")({
@@ -16,6 +16,26 @@ function VerifyEmailPage() {
   const [email, setEmail] = useState(prefillEmail ?? "");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const handleResend = async () => {
+    if (!email) {
+      toast.error("Veuillez saisir votre adresse email.");
+      return;
+    }
+    setResending(true);
+    try {
+      await resendVerificationEmail({ email });
+      toast.success("Code renvoyé !", {
+        description: "Un nouveau code de vérification a été envoyé à votre e-mail.",
+      });
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Une erreur est survenue.";
+      toast.error("Échec de l'envoi", { description: msg });
+    } finally {
+      setResending(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +82,16 @@ function VerifyEmailPage() {
         <AuthButton type="submit" disabled={loading}>
           {loading ? "Vérification…" : "Vérifier mon email"}
         </AuthButton>
+        <div className="text-center mt-4">
+          <button
+            type="button"
+            disabled={resending || loading}
+            onClick={handleResend}
+            className="text-xs text-teal hover:underline font-semibold cursor-pointer disabled:opacity-50"
+          >
+            {resending ? "Renvoi en cours…" : "Renvoyer le code"}
+          </button>
+        </div>
       </form>
     </AuthLayout>
   );

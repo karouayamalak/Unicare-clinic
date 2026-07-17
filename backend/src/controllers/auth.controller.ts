@@ -105,17 +105,14 @@ export const login = async (
       return next(new AppError("Invalid email or password.", 401));
     }
 
-    // In dev mode auto-verify; in production enforce verification
+    // Always enforce email verification
     if (!user.isEmailVerified) {
-      if (process.env.NODE_ENV === "production") {
-        return next(
-          new AppError(
-            "Votre email n'est pas vérifié. Veuillez vérifier votre boîte mail.",
-            403,
-          ),
-        );
-      }
-      user.isEmailVerified = true;
+      return next(
+        new AppError(
+          "Votre email n'est pas vérifié. Veuillez vérifier votre boîte mail.",
+          403,
+        ),
+      );
     }
 
     await user.resetLoginAttempts();
@@ -194,6 +191,51 @@ export const verifyEmail = async (
   }
 };
 
+// ─── Resend Verification Code ──────────────────────────────────────────────────
+
+export const resendVerification = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return next(new AppError("Email is required.", 400));
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return next(new AppError("User not found.", 404));
+    }
+
+    if (user.isEmailVerified) {
+      return next(new AppError("Email is already verified.", 400));
+    }
+
+    const verificationCode = Math.floor(
+      100000 + Math.random() * 900000,
+    ).toString();
+    const hashedCode = crypto
+      .createHash("sha256")
+      .update(verificationCode)
+      .digest("hex");
+
+    user.emailVerificationToken = hashedCode;
+    user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await user.save({ validateBeforeSave: false });
+
+    await sendVerificationEmail(user.email, verificationCode);
+
+    res.status(200).json({
+      status: "success",
+      message: "Verification code sent to your email.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ─── Google Login ─────────────────────────────────────────────────────────────
 
 export const googleLogin = async (
@@ -214,22 +256,74 @@ export const googleLogin = async (
     const lastName = payload.family_name || "";
 
     let user = await User.findOne({ email });
+    let isNewUser = false;
+
     if (!user) {
+      isNewUser = true;
       // Generate a secure random password to satisfy database model validation requirements
       const generatedPassword = crypto.randomBytes(16).toString("hex") + "aA1!";
 
-      // Auto-register new user via Google Sign-In (standard OAuth UX)
+      const verificationCode = Math.floor(
+        100000 + Math.random() * 900000,
+      ).toString();
+      const hashedCode = crypto
+        .createHash("sha256")
+        .update(verificationCode)
+        .digest("hex");
+
+      // Register new user via Google Sign-In with isEmailVerified: false
       user = await User.create({
         firstName,
         lastName,
         email,
         password: generatedPassword,
         role: "Patient",
-        isEmailVerified: true, // Google emails are pre-verified
+        isEmailVerified: false,
+        emailVerificationToken: hashedCode,
+        emailVerificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
         isActive: true,
         loginAttempts: 0,
       });
-      console.log(`Auto-registered new user via Google Sign-In: ${email}`);
+      console.log(`Registered new user via Google Sign-In (requires verification): ${email}`);
+      await sendVerificationEmail(user.email, verificationCode);
+    }
+
+    if (!user.isEmailVerified) {
+      // If user exists but is not verified, generate a code if none exists or has expired
+      let verificationCode = "";
+      if (user.emailVerificationToken && user.emailVerificationExpires && user.emailVerificationExpires > new Date()) {
+        // We cannot decrypt sha256 hash, so generate a new code to be sure
+        verificationCode = Math.floor(
+          100000 + Math.random() * 900000,
+        ).toString();
+        const hashedCode = crypto
+          .createHash("sha256")
+          .update(verificationCode)
+          .digest("hex");
+        user.emailVerificationToken = hashedCode;
+        user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        await user.save({ validateBeforeSave: false });
+      } else {
+        verificationCode = Math.floor(
+          100000 + Math.random() * 900000,
+        ).toString();
+        const hashedCode = crypto
+          .createHash("sha256")
+          .update(verificationCode)
+          .digest("hex");
+        user.emailVerificationToken = hashedCode;
+        user.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        await user.save({ validateBeforeSave: false });
+      }
+
+      await sendVerificationEmail(user.email, verificationCode);
+
+      res.status(200).json({
+        status: "verification_required",
+        email: user.email,
+        message: "Account created or email unverified. A verification code has been sent.",
+      });
+      return;
     }
 
     const accessToken = generateAccessToken({

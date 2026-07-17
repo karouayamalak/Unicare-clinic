@@ -73,6 +73,9 @@ export const registerUser = (payload: {
 export const verifyEmailCode = (payload: { email: string; code: string }) =>
   api.post<{ status: string; message: string }>("/auth/verify-email", payload);
 
+export const resendVerificationEmail = (payload: { email: string }) =>
+  api.post<{ status: string; message: string }>("/auth/resend-verification", payload);
+
 export const loginUser = (payload: { email: string; password: string }) =>
   api.post<{ status: string; message: string; data: { email?: string; user?: AuthUser } }>("/auth/login", payload);
 

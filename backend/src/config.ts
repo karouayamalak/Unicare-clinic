@@ -24,8 +24,8 @@ const envSchema = z.object({
   COOKIE_SECRET: z
     .string()
     .min(32, "COOKIE_SECRET must be at least 32 characters"),
-  RESEND_API_KEY: z.string().optional().default(""),
-  FROM_EMAIL: z.string().default("onboarding@resend.dev"),
+  GMAIL_USER: z.string().optional().default(""),
+  GMAIL_APP_PASSWORD: z.string().optional().default(""),
   FRONTEND_URL: z.string().url().default("http://localhost:8082"),
   GOOGLE_CLIENT_ID: z.string().optional().default(""),
   CLINIC_HOLIDAYS: z.string().default(""),
