@@ -80,8 +80,8 @@ export const sendVerificationEmail = async (to: string, code: string): Promise<v
             Bienvenue sur UniCare. Utilisez le code ci-dessous pour vérifier votre adresse e-mail.
             Ce code expire dans <strong>24 heures</strong>.
           </p>
-          <div style="display:inline-block;background:#f1f5f9;border:2px dashed #06122e;border-radius:12px;padding:20px 40px;margin:8px 0 28px;">
-            <span style="font-size:40px;font-weight:800;letter-spacing:12px;color:#0f172a;">${code}</span>
+          <div style="display:inline-block;background:#f1f5f9;border:2px dashed #06122e;border-radius:12px;padding:16px 24px;margin:8px 0 28px;text-align:center;vertical-align:middle;">
+            <span style="font-size:32px;font-weight:800;letter-spacing:8px;text-indent:8px;display:inline-block;color:#0f172a;">${code}</span>
           </div>
           <p style="color:#94a3b8;font-size:12px;margin:0;">
             Si vous n'avez pas créé de compte, ignorez cet e-mail.
