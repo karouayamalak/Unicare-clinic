@@ -101,7 +101,6 @@ export const createAppointment = async (
       }
       const patientUser = await User.findOne({
         email: patientEmail.toLowerCase().trim(),
-        role: "Patient",
       });
       if (!patientUser) {
         return next(new AppError("Patient non trouvé avec cette adresse email.", 404));
