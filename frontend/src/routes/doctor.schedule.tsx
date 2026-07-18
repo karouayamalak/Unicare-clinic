@@ -181,7 +181,7 @@ function DoctorSchedule() {
       load();
       setShowBlockModal(false);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Erreur lors du blocage.");
+      toast.error(err.message || "Erreur lors du blocage.");
     }
   };
 
@@ -232,7 +232,7 @@ function DoctorSchedule() {
       setBaseDate(new Date(bookDate + "T12:00:00"));
       await load();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Erreur lors de la prise de rendez-vous.");
+      toast.error(err.message || "Erreur lors de la prise de rendez-vous.");
     } finally {
       setBookingLoading(false);
     }
