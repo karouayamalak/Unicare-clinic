@@ -22,9 +22,6 @@ function DoctorSettings() {
   );
   const [clinicName, setClinicName] = useState("CHU de Béjaïa — Espace Médical Gouraya");
   const [image, setImage] = useState(user?.image ?? "");
-  const [notifEmail, setNotifEmail] = useState(true);
-  const [notifSms, setNotifSms] = useState(true);
-  const [notifAppt, setNotifAppt] = useState(true);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -55,7 +52,7 @@ function DoctorSettings() {
     <div className="space-y-8 max-w-3xl">
       <PageHeader
         title="Paramètres"
-        description="Gérez votre profil professionnel et vos préférences de notification."
+        description="Gérez votre profil professionnel."
         actions={
           <button
             onClick={handleSave}
@@ -128,66 +125,6 @@ function DoctorSettings() {
             className="w-full rounded-xl border border-border bg-slate-50/50 p-3 text-sm text-ink focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/10 shadow-sm resize-none"
           />
         </div>
-      </div>
-
-      {/* Notifications */}
-      <div className="rounded-2xl border border-border bg-white/50 p-6 backdrop-blur-sm shadow-soft space-y-4">
-        <h3 className="text-sm font-bold text-ink">Préférences de notification</h3>
-        {[
-          {
-            label: "Notifications par e-mail",
-            desc: "Recevoir les confirmations de RDV par e-mail",
-            val: notifEmail,
-            set: setNotifEmail,
-          },
-          {
-            label: "Notifications SMS",
-            desc: "Recevoir des rappels de RDV par SMS",
-            val: notifSms,
-            set: setNotifSms,
-          },
-          {
-            label: "Alertes de nouveaux rendez-vous",
-            desc: "Être alerté lorsqu'un patient réserve une consultation",
-            val: notifAppt,
-            set: setNotifAppt,
-          },
-        ].map((n) => (
-          <div
-            key={n.label}
-            className="flex items-center justify-between rounded-xl border border-border/50 bg-white/40 px-4 py-3.5 shadow-sm"
-          >
-            <div>
-              <p className="text-sm font-semibold text-ink">{n.label}</p>
-              <p className="text-xs text-ink-soft/70 mt-0.5">{n.desc}</p>
-            </div>
-            <button
-              onClick={() => n.set(!n.val)}
-              className={cn(
-                "relative h-6 w-11 rounded-full transition-colors duration-200 focus:outline-none cursor-pointer",
-                n.val ? "bg-teal" : "bg-slate-200",
-              )}
-            >
-              <span
-                className={cn(
-                  "absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200",
-                  n.val ? "translate-x-5" : "translate-x-0.5",
-                )}
-              />
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* Danger zone */}
-      <div className="rounded-2xl border border-red-200 bg-red-50/50 p-6 space-y-3">
-        <h3 className="text-sm font-bold text-red-700">Zone sensible</h3>
-        <p className="text-xs text-red-600/80">
-          Ces actions sont irréversibles. Procédez avec précaution.
-        </p>
-        <button className="rounded-xl border border-red-200 bg-white px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition cursor-pointer">
-          Désactiver temporairement mon compte
-        </button>
       </div>
     </div>
   );
