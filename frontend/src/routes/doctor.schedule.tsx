@@ -121,7 +121,7 @@ function DoctorSchedule() {
   // Load all info from backend
   const load = async () => {
     try {
-      // 1. Fetch appointments
+      // 1. Fetch ALL appointments (backend filters by doctorId for Doctor role)
       const apptsRes = await fetchAppointments();
       setAppointments(apptsRes.data.appointments);
 
@@ -144,6 +144,11 @@ function DoctorSchedule() {
   useEffect(() => {
     load();
   }, [user]);
+
+  // Reload when navigating to a different week
+  useEffect(() => {
+    if (user) load();
+  }, [baseDate]);
 
   // Map appointments to grid: key = "dayIndex-hourIndex"
   const eventMap: Record<string, ApiAppointment> = {};
@@ -223,9 +228,9 @@ function DoctorSchedule() {
       setBookPatientChildren([]);
       setSelectedChildId("");
       setBookReason("");
-      await load();
-      // Navigate the calendar to the week containing the booked appointment
+      // Navigate to the booked week FIRST, then reload — so weekDates and appointments update together
       setBaseDate(new Date(bookDate + "T12:00:00"));
+      await load();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Erreur lors de la prise de rendez-vous.");
     } finally {
