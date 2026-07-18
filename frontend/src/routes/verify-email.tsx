@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AuthButton, AuthField, AuthLayout } from "../components/layouts/AuthLayout";
-import { verifyEmail, resendVerificationEmail, ApiError } from "../lib/api";
+import { verifyEmailCode, resendVerificationEmail, ApiError } from "../lib/api";
 import { z } from "zod";
 
 export const Route = createFileRoute("/verify-email")({
@@ -45,7 +45,7 @@ function VerifyEmailPage() {
     }
     setLoading(true);
     try {
-      await verifyEmail({ email, code });
+      await verifyEmailCode({ email, code });
       toast.success("Email vérifié !", { description: "Vous pouvez maintenant vous connecter." });
       nav({ to: "/login" });
     } catch (err) {

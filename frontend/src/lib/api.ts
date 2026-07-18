@@ -430,10 +430,3 @@ export const fetchActionLogs = (params?: { actorRole?: string; objectType?: stri
   return api.get<ActionLogListResponse>(`/logs${qs}`);
 };
 
-export const verifyEmail = verifyEmailCode;
-
-// ── Backward-compat aliases used by copied route files ────────────────────────
-export const fetchMyProfile = fetchMyPatientProfile;
-export const fetchPatientsList = fetchPatients;
-export const updateMyProfile = updateProfile;
-
