@@ -224,6 +224,8 @@ function DoctorSchedule() {
       setSelectedChildId("");
       setBookReason("");
       await load();
+      // Navigate the calendar to the week containing the booked appointment
+      setBaseDate(new Date(bookDate + "T12:00:00"));
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Erreur lors de la prise de rendez-vous.");
     } finally {

@@ -73,6 +73,7 @@ export const validateAppointmentBooking = ({
   appointmentDurationMinutes = DEFAULT_APPOINTMENT_DURATION_MINUTES,
   maxFutureDays = 90,
   clinicHolidays = [],
+  bypassStrictChecks = false,
 }: {
   doctor: DoctorBookingInfo;
   doctorId: string;
@@ -84,6 +85,8 @@ export const validateAppointmentBooking = ({
   appointmentDurationMinutes?: number;
   maxFutureDays?: number;
   clinicHolidays?: string[];
+  /** When true (Doctor/Admin booking), skips past-time, working-hours, vacation and break checks */
+  bypassStrictChecks?: boolean;
 }): AppointmentValidationResult => {
   if (!date || !time) {
     return {
@@ -102,90 +105,92 @@ export const validateAppointmentBooking = ({
     };
   }
 
-  if (slotDateTime.getTime() <= now.getTime()) {
-    return {
-      isValid: false,
-      errorMessage: "Appointments cannot be booked in the past.",
-      statusCode: 400,
-    };
-  }
-
-  const futureLimit = maxFutureDays * 24 * 60 * 60 * 1000;
-  if (slotDateTime.getTime() - now.getTime() > futureLimit) {
-    return {
-      isValid: false,
-      errorMessage: "Appointments cannot be booked that far in the future.",
-      statusCode: 400,
-    };
-  }
-
-  if (doctor.status !== "Actif") {
-    return {
-      isValid: false,
-      errorMessage:
-        "Ce médecin n'accepte pas de nouveaux rendez-vous pour le moment.",
-      statusCode: 400,
-    };
-  }
-
-  const dayName = getDayName(slotDateTime);
-  if (!doctor.availableDays.includes(dayName)) {
-    return {
-      isValid: false,
-      errorMessage: "Ce médecin n'est pas disponible ce jour-là.",
-      statusCode: 400,
-    };
-  }
-
-  const clinicHoliday = clinicHolidays.includes(date);
-  if (clinicHoliday) {
-    return {
-      isValid: false,
-      errorMessage: "La clinique est fermée ce jour-là.",
-      statusCode: 400,
-    };
-  }
-
-  const vacationDays = doctor.vacationDays ?? [];
-  if (vacationDays.includes(date)) {
-    return {
-      isValid: false,
-      errorMessage: "Le médecin est en congé ce jour-là.",
-      statusCode: 400,
-    };
-  }
-
-  const openingMinutes = toMinutes(doctor.availableHours.start);
-  const closingMinutes = toMinutes(doctor.availableHours.end);
   const slotStartMinutes = toMinutes(time);
   const slotEndMinutes = slotStartMinutes + appointmentDurationMinutes;
 
-  let isWithinHours = false;
-  if (openingMinutes <= closingMinutes) {
-    isWithinHours = slotStartMinutes >= openingMinutes && slotEndMinutes <= closingMinutes;
-  } else {
-    // Cross-midnight shifts (e.g. night shift 20:00 to 04:00)
-    isWithinHours = slotStartMinutes >= openingMinutes || slotEndMinutes <= closingMinutes;
-  }
-
-  if (!isWithinHours) {
-    return {
-      isValid: false,
-      errorMessage:
-        "Le créneau est en dehors des heures de disponibilité du médecin.",
-      statusCode: 400,
-    };
-  }
-
-  for (const breakWindow of doctor.breaks ?? []) {
-    const breakStart = toMinutes(breakWindow.start);
-    const breakEnd = toMinutes(breakWindow.end);
-    if (overlaps(slotStartMinutes, slotEndMinutes, breakStart, breakEnd)) {
+  if (!bypassStrictChecks) {
+    if (slotDateTime.getTime() <= now.getTime()) {
       return {
         isValid: false,
-        errorMessage: "Le médecin est en pause à cette heure-ci.",
+        errorMessage: "Appointments cannot be booked in the past.",
         statusCode: 400,
       };
+    }
+
+    const futureLimit = maxFutureDays * 24 * 60 * 60 * 1000;
+    if (slotDateTime.getTime() - now.getTime() > futureLimit) {
+      return {
+        isValid: false,
+        errorMessage: "Appointments cannot be booked that far in the future.",
+        statusCode: 400,
+      };
+    }
+
+    if (doctor.status !== "Actif") {
+      return {
+        isValid: false,
+        errorMessage:
+          "Ce médecin n'accepte pas de nouveaux rendez-vous pour le moment.",
+        statusCode: 400,
+      };
+    }
+
+    const dayName = getDayName(slotDateTime);
+    if (!doctor.availableDays.includes(dayName)) {
+      return {
+        isValid: false,
+        errorMessage: "Ce médecin n'est pas disponible ce jour-là.",
+        statusCode: 400,
+      };
+    }
+
+    const clinicHoliday = clinicHolidays.includes(date);
+    if (clinicHoliday) {
+      return {
+        isValid: false,
+        errorMessage: "La clinique est fermée ce jour-là.",
+        statusCode: 400,
+      };
+    }
+
+    const vacationDays = doctor.vacationDays ?? [];
+    if (vacationDays.includes(date)) {
+      return {
+        isValid: false,
+        errorMessage: "Le médecin est en congé ce jour-là.",
+        statusCode: 400,
+      };
+    }
+
+    const openingMinutes = toMinutes(doctor.availableHours.start);
+    const closingMinutes = toMinutes(doctor.availableHours.end);
+
+    let isWithinHours = false;
+    if (openingMinutes <= closingMinutes) {
+      isWithinHours = slotStartMinutes >= openingMinutes && slotEndMinutes <= closingMinutes;
+    } else {
+      isWithinHours = slotStartMinutes >= openingMinutes || slotEndMinutes <= closingMinutes;
+    }
+
+    if (!isWithinHours) {
+      return {
+        isValid: false,
+        errorMessage:
+          "Le créneau est en dehors des heures de disponibilité du médecin.",
+        statusCode: 400,
+      };
+    }
+
+    for (const breakWindow of doctor.breaks ?? []) {
+      const breakStart = toMinutes(breakWindow.start);
+      const breakEnd = toMinutes(breakWindow.end);
+      if (overlaps(slotStartMinutes, slotEndMinutes, breakStart, breakEnd)) {
+        return {
+          isValid: false,
+          errorMessage: "Le médecin est en pause à cette heure-ci.",
+          statusCode: 400,
+        };
+      }
     }
   }
 

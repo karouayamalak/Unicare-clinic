@@ -162,6 +162,8 @@ export const createAppointment = async (
         time: a.time,
         status: a.status,
       })),
+      // Doctors and Admins booking on behalf of a patient bypass time/schedule restrictions
+      bypassStrictChecks: user.role === "Doctor" || user.role === "Admin",
     });
 
     if (!validation.isValid) {
